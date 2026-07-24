@@ -12,7 +12,9 @@
             ->first();
         $cards = $cards ?? [
             'total_members' => 0, 'today_meals' => 0.0,
+            'total_meals' => 0.0,
             'monthly_expenses' => 0.0, 'meal_rate' => 0.0,
+            'total_credit' => 0.0, 'total_dues' => 0.0,
             'total_member_balance' => 0.0,
         ];
         $pendingMealOff = $pendingMealOff ?? 0;
@@ -56,6 +58,10 @@
             :label="__('Today\'s Meals')"
             :value="number_format((float) $cards['today_meals'], 1)" />
 
+        <x-stat-card
+            :label="__('Total Meals (this month)')"
+            :value="number_format((float) ($cards['total_meals'] ?? 0), 1)" />
+
         @php
             $mealRateHint = ((float) $cards['meal_rate'] === 0.0) ? __('no bazar recorded yet') : null;
         @endphp
@@ -68,15 +74,15 @@
             :label="__('Monthly Expenses')"
             :value="Money::taka((float) $cards['monthly_expenses'])" />
 
-        @php
-            $netBalance = (float) ($cards['total_member_balance'] ?? 0);
-            $netValue = ($netBalance < 0 ? __('Owes').' ' : ($netBalance > 0 ? __('Credit').' ' : '')).Money::taka(abs($netBalance));
-            $netHint = $netBalance < 0 ? __('Members net owe the mess') : ($netBalance > 0 ? __('Members net in credit') : __('Settled'));
-        @endphp
         <x-stat-card
-            :label="__('Member balances (net)')"
-            :value="$netValue"
-            :hint="$netHint" />
+            :label="__('Total Credit (advance)')"
+            :value="Money::taka((float) ($cards['total_credit'] ?? 0))"
+            :hint="__('Prepaid by members')" />
+
+        <x-stat-card
+            :label="__('Total Dues')"
+            :value="Money::taka((float) ($cards['total_dues'] ?? 0))"
+            :hint="__('Owed by members')" />
     </section>
 
     {{-- Report widgets (replaces the old 3 trend charts) --}}

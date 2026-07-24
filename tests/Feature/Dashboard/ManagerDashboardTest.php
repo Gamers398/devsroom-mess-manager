@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Dashboard;
 
+use App\Models\AdvanceBalance;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\MealEntry;
@@ -52,9 +53,33 @@ class ManagerDashboardTest extends TestCase
         $response->assertOk();
         $response->assertSee(__('Total Members'));
         $response->assertSee(__("Today's Meals"));
+        $response->assertSee(__('Total Meals (this month)'));
         $response->assertSee(__('Current Meal Rate'));
         $response->assertSee(__('Monthly Expenses'));
-        $response->assertSee(__('Member balances (net)'));
+        $response->assertSee(__('Total Credit (advance)'));
+        $response->assertSee(__('Total Dues'));
+        // The old single net-balance card was split into Credit + Dues.
+        $response->assertDontSee(__('Member balances (net)'));
+    }
+
+    public function test_home_shows_split_credit_and_dues_from_balances(): void
+    {
+        $member = Member::factory()->create([
+            'mess_id' => Mess::activeId(),
+            'status' => MemberStatus::ACTIVE,
+        ]);
+        // advance_balances is the running-total table the cards sum.
+        AdvanceBalance::factory()->create([
+            'member_id' => $member->id,
+            'balance' => 300,       // credit (prepaid)
+            'due_balance' => 120,   // dues (owed)
+        ]);
+
+        $response = $this->actingAs($this->admin())->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee(number_format(300, 2));   // Total Credit
+        $response->assertSee(number_format(120, 2));   // Total Dues
     }
 
     public function test_home_shows_pending_meal_off_banner_when_pending(): void

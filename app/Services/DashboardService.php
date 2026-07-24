@@ -68,13 +68,28 @@ class DashboardService
     }
 
     /**
-     * The 6 DASH-01 manager cards.
+     * The manager stat cards.
+     *
+     * Bill-derived cards (meal_rate, total_meals, total_credit, total_dues,
+     * total_member_balance) reuse the bill-preview cache via
+     * BillPreviewService::preview() (NO new key). Count-based cards
+     * (total_members, today_meals, monthly_expenses) use the composite key
+     * dash:counts:{mess_id}:{YYYY}-{MM} (1h TTL).
+     *
+     * total_credit = Σ advance_balance (money members prepaid; mess holds it).
+     * total_dues   = Σ due_balance   (money members still owe).
+     * total_member_balance (net) = total_credit − total_dues, kept for
+     * backward compatibility even though the dashboard now shows the two
+     * gross figures separately (clearer than a single net number).
      *
      * @return array{
      *     total_members:int,
      *     today_meals:float,
+     *     total_meals:float,
      *     monthly_expenses:float,
      *     meal_rate:float,
+     *     total_credit:float,
+     *     total_dues:float,
      *     total_member_balance:float,
      * }
      */
@@ -85,8 +100,11 @@ class DashboardService
             return [
                 'total_members' => 0,
                 'today_meals' => 0.0,
+                'total_meals' => 0.0,
                 'monthly_expenses' => 0.0,
                 'meal_rate' => 0.0,
+                'total_credit' => 0.0,
+                'total_dues' => 0.0,
                 'total_member_balance' => 0.0,
             ];
         }
@@ -116,12 +134,18 @@ class DashboardService
         $preview = $this->preview->preview($now->year, $now->month);
         $members = $preview['members'] ?? [];
 
+        $totalCredit = (float) collect($members)->sum(fn ($m) => max(0.0, (float) ($m['advance_balance'] ?? 0)));
+        $totalDues = (float) collect($members)->sum(fn ($m) => max(0.0, (float) ($m['due_balance'] ?? 0)));
+
         return [
             'total_members' => $counts['total_members'],
             'today_meals' => $counts['today_meals'],
+            'total_meals' => (float) ($preview['total_meals'] ?? 0.0),
             'monthly_expenses' => $counts['monthly_expenses'],
             'meal_rate' => (float) ($preview['meal_rate'] ?? 0.0),
-            'total_member_balance' => (float) collect($members)->sum(fn ($m) => ($m['advance_balance'] ?? 0) - ($m['due_balance'] ?? 0)),
+            'total_credit' => $totalCredit,
+            'total_dues' => $totalDues,
+            'total_member_balance' => round($totalCredit - $totalDues, 2),
         ];
     }
 
