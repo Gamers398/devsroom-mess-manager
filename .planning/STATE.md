@@ -20,7 +20,7 @@ progress:
 **Project:** Devsroom Mess Management
 **Current Phase:** 06
 **Current Plan:** 4 (final plan of Phase 06 — complete)
-**Last activity:** 2026-07-23 - Completed quick task 260723-m1: meal-rate ৳0.00 denominator fix (Monthly Report/Member Statement/Dashboard), configurable meal weights from admin UI, advance deposits now offset the live bill (consumed + netted at month-close), expenses show/edit/delete + Expense Report View action + vendor column, payments list Edit/Delete buttons, bill-preview invalidation on manual balance adjust. All billing/expense/payment/report tests green. Deploy note: cache clears within 1h (or `cache:clear`) for the new rate/advance math to show.
+**Last activity:** 2026-07-24 - Completed quick task 260724-jui: fixed member 403 ACCESS DENIED on /my (new idempotent role-reconciliation migration rescues members left role-less by the buggy user→mess-member rename pivot), added a reconciled This-month summary (Bill/Paid/Advance applied/Due) to the wallet (member + manager), and an Advance-applied line to both statement views. All affected + 54-test billing regression suite green. Deploy: run `php artisan migrate` (forward only) + `cache:clear` on prod.
 
 ## Project Reference
 
@@ -110,6 +110,7 @@ None.
 | 260717-2q3 | Multi-provider backup (Local/GDrive/R2), editable expense categories, close-month modal fix, data-driven month picker, member-statement access fix, unified Add Expense form | 2026-07-17 | 002a00a | [260717-2q3-batch-of-6-mess-management-improvements-](./quick/260717-2q3-batch-of-6-mess-management-improvements-/) |
 | 260722-xba | Fix 500 on member create (assignRole/audit unguarded), photo dropped on account-create, cron line uses PHP_BINARY, storage:link check | 2026-07-22 | 7104804 | [260722-xba-fix-cron-command-500-on-member-create-ba](./quick/260722-xba-fix-cron-command-500-on-member-create-ba/) |
 | 260723-m1 | Meal-rate ৳0.00 denominator fix; configurable meal weights UI; advance offsets live bill (+consume/net at close); expenses show/edit/delete + report View + vendor column; payments list Edit/Delete; preview invalidation on adjust | 2026-07-23 | 968d5bc | [260723-m1-mess-billing-fixes-crud](./quick/260723-m1-mess-billing-fixes-crud/) |
+| 260724-jui | Member 403 ACCESS DENIED on /my (reconcile stranded roles after user→mess-member rename); wallet reconciled This-month summary (Bill/Paid/Advance applied/Due); statement advance-applied line | 2026-07-24 | 2b9db9a | [260724-jui-fix-member-403-access-denied-wallet-bill](./quick/260724-jui-fix-member-403-access-denied-wallet-bill/) |
 
 ## Session Notes
 
