@@ -48,3 +48,7 @@ Added a **Feature guide** section with step-by-step how-tos for every feature (m
 - `php artisan view:clear` (so the new banner + removed restore-test button render).
 - **Install the per-minute cron on CloudPanel if not already present** (the #6 root cause): `* * * * * cd /home/wpmhs-mess/htdocs/mess.wpmhs.com && /usr/bin/php8.4 artisan schedule:run >> /dev/null 2>&1`. After deploy the new scheduler-health banner on the Backups page will confirm whether it's firing.
 - Consider configuring at least one off-site backup destination (DO Spaces / R2 / GDrive) — currently local-only, which dies with the server.
+
+## Addendum (follow-up) — PHPUnit test suite removed
+
+The operator clarified "remove test system" meant the **whole `tests/` folder** (not just the restore-test). Done in commit `3f30535`: deleted the `tests/` tree + `phpunit.xml`, removed the `Tests\` autoload-dev namespace + `test` composer script, and `composer remove --dev phpunit/phpunit mockery/mockery` (composer.lock regenerated, app boots clean, no dangling `Tests\` refs). **Kept**: `database/factories/` + `fakerphp/faker` (the `db:seed:perf-demo` seeder uses them) and the dev debug tools (debugbar / telescope / pail / pint / collision). Trade-off acknowledged with the operator: the 374-test regression net is gone. Deploy note: prod runs `composer install --no-dev` anyway, so removing dev packages has no prod runtime effect.
