@@ -234,7 +234,16 @@
             </div>
         </section>
 
-        @php $carriedNet = ($row['advance_balance'] ?? 0) - ($row['due_balance'] ?? 0); @endphp
+        @php
+            // Balance carried forward = the member's true net. For an OPEN month
+            // the stored advance hasn't been applied to this month's bill yet, so
+            // net it: money in (advance + payments) − money owed (bill + prior due).
+            // For a CLOSED month the snapshot advance/due are already the settled
+            // closing figures, so advance − due is correct (don't re-subtract bill).
+            $carriedNet = $isSnapshot
+                ? (($row['advance_balance'] ?? 0) - ($row['due_balance'] ?? 0))
+                : (($row['advance_balance'] ?? 0) + ($row['bill_payments'] ?? 0) - ($row['bill'] ?? 0) - ($row['due_balance'] ?? 0));
+        @endphp
         {{-- Closing summary card --}}
         <section class="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-700">{{ __('Closing summary') }}</h2>

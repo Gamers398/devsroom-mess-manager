@@ -8,7 +8,16 @@
         $isSnapshot = ($data['source'] ?? 'live') === 'snapshot';
         $members = $data['members'] ?? [];
         $totalDue = collect($members)->sum('due');
-        $totalNet = collect($members)->sum(fn ($r) => ($r['advance_balance'] ?? 0) - ($r['due_balance'] ?? 0));
+        // Balance = the member's TRUE net position, consistent with the Due
+        // column. For an OPEN month the stored advance hasn't been applied to
+        // this month's bill yet, so net it out: money in (advance + payments)
+        // − money owed (bill + prior due). For a CLOSED month the snapshot's
+        // advance/due ARE the settled closing figures (the bill is already
+        // baked into them), so advance − due is correct and the bill must NOT
+        // be re-subtracted (would double-count).
+        $totalNet = $isSnapshot
+            ? collect($members)->sum(fn ($r) => ($r['advance_balance'] ?? 0) - ($r['due_balance'] ?? 0))
+            : collect($members)->sum(fn ($r) => ($r['advance_balance'] ?? 0) + ($r['bill_payments'] ?? 0) - ($r['bill'] ?? 0) - ($r['due_balance'] ?? 0));
         $hasData = ! empty($members);
     @endphp
 
@@ -126,7 +135,16 @@
                                 <td class="px-4 py-3 text-right font-medium tabular-nums">{{ Money::taka($row['bill']) }}</td>
                                 <td class="px-4 py-3 text-right tabular-nums">{{ Money::taka($row['bill_payments']) }}</td>
                                 <td class="px-4 py-3 text-right tabular-nums text-rose-600">{{ Money::taka($row['due']) }}</td>
-                                @php $rowNet = ($row['advance_balance'] ?? 0) - ($row['due_balance'] ?? 0); @endphp
+                                @php
+                                    // True net — see the $totalNet note above. Open month nets
+                                    // this month's bill against the advance so the Balance column
+                                    // never contradicts the Due column (the old raw advance − due
+                                    // showed e.g. "Credit 2,000" next to "Due 878" for a member
+                                    // who prepaid, which looked impossible).
+                                    $rowNet = $isSnapshot
+                                        ? (($row['advance_balance'] ?? 0) - ($row['due_balance'] ?? 0))
+                                        : (($row['advance_balance'] ?? 0) + ($row['bill_payments'] ?? 0) - ($row['bill'] ?? 0) - ($row['due_balance'] ?? 0));
+                                @endphp
                                 <td class="px-4 py-3 text-right tabular-nums font-medium {{ $rowNet < 0 ? 'text-rose-600' : 'text-emerald-600' }}">
                                     {{ $rowNet < 0 ? __('Owes') : __('Credit') }} {{ Money::taka(abs($rowNet)) }}
                                 </td>
@@ -136,5 +154,8 @@
                 </table>
             </div>
         </section>
+        <p class="mt-3 text-xs text-slate-500">
+            @lang('Balance = advance + payments − bill − prior due (the member\'s true net). Due = this month\'s bill still owed after payments and any advance applied. A member can show both a Credit balance and a Due — the advance is applied first, so the Due is what they actually still owe.')
+        </p>
     @endif
 @endsection
