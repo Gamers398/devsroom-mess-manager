@@ -39,6 +39,7 @@ class WalletLedgerService
      *     member:Member,
      *     current_balance:float,
      *     pending_bill:float,
+     *     month_summary:array<string,float>|null,
      *     rows:Collection<int,array<string,mixed>>,
      * }
      */
@@ -107,9 +108,24 @@ class WalletLedgerService
             ->where('month', $now->month)
             ->exists();
         $pendingBill = 0.0;
+        // Reconciled current-month summary from the authoritative bill preview:
+        // Bill − (bill payments + advance applied) = Due. Surfaced so the wallet
+        // shows a single reconciled Due instead of a disconnected Credit header
+        // + raw pending bill (the "mismatch" members saw after an advance).
+        $monthSummary = null;
         if (! $alreadyClosed) {
             $billRow = $this->preview->forMember($member->id, $now->year, $now->month);
             $pendingBill = (float) ($billRow['bill'] ?? 0);
+            if ($billRow) {
+                $monthSummary = [
+                    'meals' => (float) ($billRow['meals'] ?? 0),
+                    'meal_cost' => (float) ($billRow['meal_cost'] ?? 0),
+                    'bill' => (float) ($billRow['bill'] ?? 0),
+                    'bill_payments' => (float) ($billRow['bill_payments'] ?? 0),
+                    'advance_applied' => (float) ($billRow['advance_applied'] ?? 0),
+                    'due' => (float) ($billRow['due'] ?? 0),
+                ];
+            }
             if ($pendingBill > 0) {
                 $rows->push([
                     'date' => $now->copy()->endOfMonth(),
@@ -130,6 +146,7 @@ class WalletLedgerService
             'member' => $member,
             'current_balance' => $currentBalance,
             'pending_bill' => $pendingBill,
+            'month_summary' => $monthSummary,
             'rows' => $rows,
         ];
     }

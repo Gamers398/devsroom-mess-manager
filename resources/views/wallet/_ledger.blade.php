@@ -17,7 +17,48 @@
     </div>
 </header>
 
-@if ($pending > 0)
+@php
+    $ms = $ledger['month_summary'] ?? null;
+    $applied = $ms ? ((float) ($ms['bill_payments']) + (float) ($ms['advance_applied'])) : 0.0;
+    $due = $ms ? (float) ($ms['due']) : 0.0;
+@endphp
+
+@if ($ms && ((float) $ms['bill']) > 0)
+    {{-- Reconciled current-month summary: Bill − payments − advance applied = Due.
+         This is the single number members asked for — it shows the advance
+         deposit actually offsetting the bill, instead of a disconnected Credit
+         header next to a raw pending bill. --}}
+    <section class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-700">{{ __('This month') }}</h2>
+            <span class="text-xs text-slate-500">{{ __('Bill − payments − advance applied = due · settles at month close') }}</span>
+        </div>
+        <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div>
+                <dt class="text-xs text-slate-500">{{ __('Bill') }}</dt>
+                <dd class="mt-0.5 text-lg font-semibold text-slate-900">{{ Money::taka((float) $ms['bill']) }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs text-slate-500">{{ __('Paid') }}</dt>
+                <dd class="mt-0.5 text-lg font-semibold text-slate-900">{{ Money::taka((float) $ms['bill_payments']) }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs text-slate-500">{{ __('Advance applied') }}</dt>
+                <dd class="mt-0.5 text-lg font-semibold text-emerald-700">{{ Money::taka((float) $ms['advance_applied']) }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs {{ $due > 0 ? 'text-rose-700' : 'text-emerald-700' }}">{{ $due > 0 ? __('Due') : __('No due') }}</dt>
+                <dd class="mt-0.5 text-lg font-semibold {{ $due > 0 ? 'text-rose-700' : 'text-emerald-700' }}">{{ Money::taka($due) }}</dd>
+            </div>
+        </dl>
+        <p class="mt-3 border-t border-slate-100 pt-2 text-xs text-slate-500">
+            @lang(':meals meals · meal cost :meal_cost.', [
+                'meals' => number_format((float) $ms['meals'], 2),
+                'meal_cost' => Money::taka((float) $ms['meal_cost']),
+            ])
+        </p>
+    </section>
+@elseif ($pending > 0)
     <p class="mb-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800">
         {{ __('Current month bill (pending): :amount — not deducted until the month closes.', ['amount' => Money::taka($pending)]) }}
     </p>
