@@ -16,6 +16,31 @@
         </div>
     </header>
 
+    {{-- Scheduler-health banner: surfaces a missing/failing server cron (the #1
+         reason "backups are configured but none appear"). Code cannot install
+         the per-minute cron — that's operator-managed on the panel. --}}
+    @if (! ($schedulerHealthy ?? true))
+        <section class="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 shadow-sm">
+            <div class="flex items-start gap-3">
+                <span class="mt-0.5 text-xl" aria-hidden="true">⚠️</span>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-amber-900">{{ __('Automatic backups may not be running') }}</p>
+                    <p class="mt-1 text-sm text-amber-800">{{ $schedulerIssue }}</p>
+                    <p class="mt-3 text-xs font-medium uppercase tracking-wide text-amber-700">{{ __('Install this cron line on the server (crontab -e / your panel):') }}</p>
+                    <div class="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <code class="block flex-1 break-all rounded bg-amber-100 px-3 py-2 font-mono text-xs text-amber-900">{{ $schedulerCronLine }}</code>
+                        <button type="button"
+                                class="btn btn-secondary text-xs"
+                                onclick="navigator.clipboard && navigator.clipboard.writeText({{ json_encode($schedulerCronLine) }}); this.textContent = '{{ __('Copied') }}';">
+                            {{ __('Copy') }}
+                        </button>
+                    </div>
+                    <p class="mt-2 text-xs text-amber-700">{{ __('Then click "Backup now" to confirm the mechanism works. If it fails, the Activity log below shows the reason.') }}</p>
+                </div>
+            </div>
+        </section>
+@endif
+
     {{-- Backup activity log (shown FIRST so a failed Backup now is immediately visible) --}}
     <section class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
         <div class="flex flex-wrap items-start justify-between gap-3">

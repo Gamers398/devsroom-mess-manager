@@ -11,6 +11,7 @@ use App\Models\BackupLog;
 use App\Models\Mess;
 use App\Support\BackupDestinations;
 use App\Support\CloudBackupCredentials;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -288,6 +289,8 @@ class BackupController extends Controller
             ->sortByDesc('last_modified')
             ->values();
 
+        $scheduler = $this->schedulerHealth($backups);
+
         return [
             'backups' => $backups,
             'config' => $config,
@@ -306,7 +309,81 @@ class BackupController extends Controller
             // the whole Backups page and lock the super-admin out of configuring.
             'backupLogs' => $this->safeRecentLogs(),
             'backupLogUnavailable' => $this->backupLogUnavailable,
+            // Scheduler health — surfaces a missing server cron (the #1 reason
+            // "backups are configured but none appear"). See schedulerHealth().
+            'schedulerHealthy' => $scheduler['healthy'],
+            'schedulerIssue' => $scheduler['issue'],
+            'schedulerCronLine' => $scheduler['cron_line'],
         ];
+    }
+
+    /**
+     * Detect whether the automatic-backup schedule is actually firing.
+     *
+     * Laravel's scheduler only runs when the server invokes
+     * `artisan schedule:run` every minute via cron — and that cron line is the
+     * ONE piece code cannot install (operator-managed on CloudPanel/cPanel). So
+     * a correctly-configured daily backup silently never runs if the cron is
+     * missing. This compares BackupConfig's cadence against the newest backup
+     * moment (max of newest zip mtime + newest success log) and returns an
+     * unhealthy verdict + the exact cron line to install when the cadence is
+     * being missed.
+     *
+     * @param  Collection  $backups  the zip list from indexData() (desc by mtime)
+     * @return array{healthy:bool, issue:?string, cron_line:string}
+     */
+    private function schedulerHealth(Collection $backups): array
+    {
+        $cronLine = '* * * * * cd '.base_path().' && '.PHP_BINARY.' artisan schedule:run >> /dev/null 2>&1';
+        $config = BackupConfig::current();
+
+        // Backups intentionally off → nothing to warn about.
+        if (! in_array($config->frequency, ['daily', 'weekly', 'monthly'], true)) {
+            return ['healthy' => true, 'issue' => null, 'cron_line' => $cronLine];
+        }
+
+        $newestZipAt = $backups->isNotEmpty() ? (int) $backups->first()['last_modified'] : 0;
+
+        // The newest SUCCESS backup_logs row is the other signal (covers a
+        // backup that wrote to a cloud-only disk with no local zip, and is the
+        // primary signal once LogScheduledBackupActivity is logging nightly runs).
+        $newestLogAt = 0;
+        try {
+            $row = BackupLog::query()
+                ->where('action', 'backup')
+                ->where('status', 'success')
+                ->latest('id')
+                ->first();
+            $newestLogAt = $row && $row->created_at ? $row->created_at->getTimestamp() : 0;
+        } catch (\Throwable) {
+            // backup_logs missing — fall back to the zip mtime only.
+        }
+
+        $lastAt = max($newestZipAt, $newestLogAt);
+
+        // Allow a buffer past the configured cadence before flagging.
+        $maxHours = (int) match ($config->frequency) {
+            'weekly' => 180,   // 7.5 days
+            'monthly' => 744,  // 31 days
+            default => 25,     // daily + ~1h buffer
+        };
+
+        $issue = null;
+        if ($lastAt === 0) {
+            $issue = __('No backup has ever been created, even though automatic backups are configured (:freq at :time). The server cron line below is almost certainly missing — add it via crontab -e / your panel.', [
+                'freq' => ucfirst((string) $config->frequency),
+                'time' => $config->runAtLabel(),
+            ]);
+        } else {
+            $ageHours = (now()->getTimestamp() - $lastAt) / 3600;
+            if ($ageHours > $maxHours) {
+                $issue = __('Last backup was :ago — automatic backups appear to have stopped. The server cron (schedule:run) is likely missing or failing. Verify the cron line below is installed.', [
+                    'ago' => Carbon::createFromTimestamp($lastAt)->diffForHumans(),
+                ]);
+            }
+        }
+
+        return ['healthy' => $issue === null, 'issue' => $issue, 'cron_line' => $cronLine];
     }
 
     /**

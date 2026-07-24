@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Listeners\LogScheduledBackupActivity;
 use App\Listeners\NotifyOnBackupFailure;
 use App\Models\Expense;
 use App\Models\GuestMeal;
@@ -25,6 +26,10 @@ use Illuminate\Support\ServiceProvider;
 use League\Flysystem\Filesystem;
 use Masbug\Flysystem\GoogleDriveAdapter;
 use Spatie\Backup\Events\BackupHasFailed;
+use Spatie\Backup\Events\BackupWasSuccessful;
+use Spatie\Backup\Events\CleanupHasFailed;
+use Spatie\Backup\Events\CleanupWasSuccessful;
+use Spatie\Backup\Events\HealthyBackupWasFound;
 use Spatie\Backup\Events\UnhealthyBackupWasFound;
 
 class AppServiceProvider extends ServiceProvider
@@ -115,6 +120,20 @@ class AppServiceProvider extends ServiceProvider
             UnhealthyBackupWasFound::class,
             NotifyOnBackupFailure::class
         );
+
+        // Also write every scheduled backup/purge/monitor outcome to the
+        // on-page Activity log (LogScheduledBackupActivity skips HTTP/manual
+        // runs so they aren't double-logged by BackupController::runNow).
+        foreach ([
+            BackupWasSuccessful::class,
+            BackupHasFailed::class,
+            CleanupWasSuccessful::class,
+            CleanupHasFailed::class,
+            HealthyBackupWasFound::class,
+            UnhealthyBackupWasFound::class,
+        ] as $eventClass) {
+            Event::listen($eventClass, LogScheduledBackupActivity::class);
+        }
     }
 
     private function registerBillPreviewInvalidation(): void
