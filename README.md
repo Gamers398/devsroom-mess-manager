@@ -38,6 +38,8 @@ A web-based mess management system built for Bangladesh messes — bachelor host
 - [Common Commands](#common-commands)
 - [Perf / Debug Tooling (dev-only)](#perf--debug-tooling-dev-only)
 - [Architecture Overview](#architecture-overview)
+- [Feature guide — using the app day-to-day](#feature-guide--using-the-app-day-to-day)
+- [Backups](#backups)
 - [Deployment](#deployment)
 - [Roadmap](#roadmap)
 - [Credits](#credits)
@@ -57,7 +59,7 @@ A web-based mess management system built for Bangladesh messes — bachelor host
 - **Live bill preview** — cached (1h TTL, mess-scoped key). Manager sees "if we closed today, meal rate would be ৳X" on the dashboard; member sees their own running bill on `/my`.
 - **Month-close** — queued (`CloseMonthJob` on the `database` queue), idempotent (`UNIQUE(mess_id, year, month)` + `firstOrCreate` + `wasRecentlyCreated`), hard-locked post-close via `EnsureMonthIsOpen` middleware on 11 write routes, immutable snapshot to `monthly_closings` + `monthly_member_summaries`. Corrections go through a separate `monthly_corrections` table — the snapshot stays immutable (CLOSE-12).
 - **4 reports** — Monthly Report (totals + per-member), Member Statement (8-section ledger per member), Expense Report (filter by date/category/month), Payment Report (filter by member/method/date).
-- **Manager dashboard** — 6 stat cards (Total Members, Today's Meals, Current Meal Rate, Monthly Expenses, Total Due, Total Advance) + 3 Chart.js charts (Meal Trend 30d line, Expense Trend 6mo bar bazar-only, Payment Trend 6mo bar all-methods) + pending-meal-off alert banner.
+- **Manager dashboard** (`/home`) — 7 stat cards: **Total Members**, **Today's Meals**, **Total Meals (this month)**, **Current Meal Rate**, **Monthly Expenses**, **Total Credit (advance)** and **Total Dues** — plus 4 report widgets (Members with dues, Top eaters this month, Spend vs collection bar, Expense-category doughnut) and a pending-meal-off alert banner.
 - **Member `/my` dashboard** — 4 Overview cards (My Meals, My Bill, My Advance, My Payment History) + tabs for Profile, Meals, Meal off, Payments, My reports.
 - **Exports** — PDF (Dompdf, plain-CSS A4 portrait, "Page N" footer) + Excel/`.xlsx` (Maatwebsite/Excel, numeric-formatted Amount columns so SUM/AVERAGE work) on all 4 reports × both manager and member sides.
 - **Audit log** — `owen-it/laravel-auditing` writes an append-only entry on every write to meal/expense/payment/member/meal-off/guest-meal models.
@@ -238,6 +240,73 @@ The app ships with four roles. Every manager route is gated by `roles:` middlewa
 
 ---
 
+## Feature guide — using the app day-to-day
+
+This is the operator/manager walkthrough: every feature, in the order you'd use it in a real month. Menu paths assume you're signed in as **admin/manager** (manager screens live under the sidebar's **Mess** / **Finance** / **Closing** / **Reports** groups). Members see a focused self-service version under **My**.
+
+### 1. First-time setup (super-admin, once)
+1. After install, visit the site → the **one-time setup wizard** asks for the initial super-admin's name/email/password.
+2. Go to **Onboarding** (`/onboarding`) → enter the mess name, currency, meal-type values (Breakfast/Lunch/Dinner weights), and the current month. This creates the active mess.
+3. *(Optional)* `php artisan db:seed:perf-demo` to explore with a 50-member demo dataset.
+
+### 2. Members  (`Mess → Members`)
+- **Add**: **Members → New** → fill name, mobile, email, room/seat, joining date, photo → **Save**. Email + mobile must be unique within the mess (duplicate prevention). The member URL is name-based (`/mess/members/john-doe`); same-name members get a disambiguating suffix.
+- **Invite**: **Members → Invite** → enter email → the member gets an email link to a **Set Password** page. (Requires `MAIL_*` to be configured.)
+- **Edit / deactivate**: a member page has **Edit** and **Deactivate** (soft-delete, reversible, keeps history). **Permanent delete** is super-admin-only and guarded against breaking the ledger.
+- Mid-month joiners/leavers: set **Joining date** / **Leaving date** — fixed expenses are prorated by active days automatically.
+
+### 3. Daily meal grid  (`Mess → Meals`)
+- Rows = members, columns = **Breakfast / Lunch / Dinner**. Tap a cell to toggle, or use the per-row **All on / All off / B / L / D** quick actions and the column **Mark all 3 / Mark all 0** presets.
+- **Save** once — the whole grid is one transaction. N+1-safe (< 100 ms at 50 members). Past/closed months are locked.
+
+### 4. Meal off  (`My → Meal off` for members; `Mess → Meal off` for managers)
+- **Member** picks a date range + reason → submits a request.
+- **Manager** sees a pending-count banner on the dashboard → **Meal off** → **Approve** or **Reject** (rejection needs a reason). Approved days auto-deduct from that member's meal count.
+
+### 5. Guest meals  (`Mess → Guest meals`)
+- Record guest name, host member, date, meal type, quantity. The charge flows to the **host member's** bill.
+
+### 6. Bazar / market expenses  (`Finance → Bazar` / `Add Expense`)
+- Enter date, purchaser, vendor, description, amount, optional receipt photo, category. **Bazar** categories feed the meal-rate calculation; **Fixed** categories do not.
+
+### 7. Fixed monthly expenses  (`Finance → Expenses`)
+- Rent, cook salary, internet, utilities, security, etc. — categorized as **Fixed**. Split equally across active members (prorated for joiners/leavers). Fixed costs never enter the meal rate.
+
+### 8. Payments & advance  (`Finance → Payments → Add Payment`)
+- Choose method (Cash / bKash / Nagad / Rocket / Bank) and type:
+  - **Bill payment** — pays down what the member owes this month.
+  - **Advance deposit** — the member prepays; held as credit and auto-applied against future bills.
+- **Wallet** (`Mess → Members → Wallet`) shows the member's full ledger: bills, payments, advance applied, running credit/dues.
+
+### 9. Member balances — how credit, dues, and "net" work
+The app keeps **two separate money figures per member** in `advance_balances`:
+- **Credit (advance)** — money the member *prepaid*; the mess holds it for them.
+- **Dues** — unpaid bill the member *owes* the mess.
+
+They're stored separately (not merged into one running total) because at **month-close** the math must not double-count: any unused advance credit is *applied* to offset the new bill first, and only the remainder becomes dues. Collapsing them would lose the distinction between "prepaid ৳500" and "owes ৳500" — which matters separately for collecting cash and for refunding. For **display**, surfaces show a single **net** = credit − dues, so a member is never shown as simultaneously owing and being owed — but the two columns stay separate underneath for correct settlement math. The dashboard's **Total Credit (advance)** and **Total Dues** cards show the two gross totals; the **Members with dues** widget lists who currently owes.
+
+### 10. Live bill preview  (`Finance → Bill preview` + dashboard + `/my`)
+- Cached (1 h, mess-scoped). Shows "if we closed today, the meal rate would be ৳X" and each member's running bill. Updates within ~2 s of any meal/expense/payment/meal-off change (cache is invalidated on save).
+
+### 11. Month-close  (`Closing → Close month`)
+1. Review the bill preview — it equals the close numbers byte-for-byte.
+2. **Close month** → runs a queued, idempotent job (`CloseMonthJob`). Re-clicking for the same month is a no-op.
+3. The month is then **hard-locked** (11 write routes blocked via `EnsureMonthIsOpen`); an immutable snapshot is written to `monthly_closings` + `monthly_member_summaries`. Managers + super-admins get a "month closed" notification.
+
+### 12. Corrections  (`Closing → Corrections`)
+- Need to adjust a *closed* month? Use **Corrections** (applies immediately to balances; the original snapshot stays immutable). The closed-month write-lock does not block corrections by design.
+
+### 13. Reports & exports  (`Reports`)
+- **Monthly Report** (totals + per-member), **Member Statement** (8-section ledger), **Expense Report**, **Payment Report** — each with a month/member/category filter and **PDF** + **Excel** export. Members can export their own statement + aggregates-only monthly report from **My → Reports**.
+
+### 14. Reading the dashboard  (`/home`)
+- **Total Members** (active), **Today's Meals** + **Total Meals (this month)**, **Current Meal Rate** (৳/meal), **Monthly Expenses** (bazar + fixed), **Total Credit (advance)** + **Total Dues**. Widgets: **Members with dues** (who to follow up with), **Top eaters**, **Spend vs collection**, **Expense categories**.
+
+### 15. Notifications  (`Settings → Notifications`)
+- Toggle channels (in-app bell, email, WhatsApp, Telegram, SMS) and configure credentials per channel. Channels fail open — a down provider never blocks the in-app record or the caller's transaction. Members receive due-reminders, payment confirmations, meal-off decisions; managers receive month-close + backup-failure broadcasts.
+
+---
+
 ## Backups
 
 The backup system (`super-admin` only, at **Dashboard → Backups**) is built on `spatie/laravel-backup` and is designed to work on both a VPS **and** restrictive shared hosting (CloudPanel, cPanel, Plesk).
@@ -254,11 +323,11 @@ The backup system (`super-admin` only, at **Dashboard → Backups**) is built on
 | **Google Drive** | `masbug/flysystem-google-drive-ext` | `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`, `GOOGLE_DRIVE_REFRESH_TOKEN`, `GOOGLE_DRIVE_FOLDER_ID` |
 
 **The Backups page:**
-- **Backup now** / **Run restore-test** — manual triggers.
-- **Activity log** — every attempt (backup / restore-test / download / delete) is recorded with status **and the captured error**, so a failure shows the real reason instead of vanishing. Each row has a **Delete** button; **Clear all** empties the log.
+- **Backup now** — creates a backup immediately (runs synchronously; fine for one small mess).
+- **Scheduler-health banner** — if automatic backups are configured but none are appearing, a yellow banner shows at the top explaining the server cron is likely missing, **with the exact cron line to install and a Copy button**. This is the fastest way to spot the #1 silent cause of "backups configured but nothing happening".
+- **Activity log** — every attempt is recorded with status **and the captured error**, so a failure shows the real reason instead of vanishing. This includes **scheduled** runs (nightly `backup:run` / `backup:purge` / `backup:monitor`), not just the manual **Backup now** button — so you can see whether the nightly job actually fired. Actions logged: `backup`, `purge`, `monitor`, `download`, `delete`, `restore`, `configure`. Each row has a **Delete** button; **Clear all** empties the log.
 - **Configuration** (inline) — schedule (frequency + time), retention (keep-days + storage cap), and the per-provider toggles above. Saved changes take effect immediately.
-- **Restore-test health badge** — the nightly restore-test verifies the latest backup by loading it into a scratch DB and asserting row-count parity.
-- **Backup list** — download / restore / delete each archive. Restore is a guarded, typed-mess-name, audit-logged flow.
+- **Backup list** — **Download** / **Restore** / **Delete** each archive. Restore is a guarded, typed-mess-name, audit-logged flow.
 
 ### Shared-hosting setup (CloudPanel / cPanel / Plesk)
 
