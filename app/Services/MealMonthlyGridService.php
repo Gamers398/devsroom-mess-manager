@@ -9,6 +9,7 @@ use App\Models\Mess;
 use App\Support\MealOffStatus;
 use App\Support\MemberStatus;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -25,7 +26,7 @@ class MealMonthlyGridService
 {
     /**
      * @return array{
-     *     members: \Illuminate\Support\Collection<int, object>,
+     *     members: Collection<int, object>,
      *     month: Carbon,
      *     days_in_month: int,
      *     closed_dates: array<int, string>,
@@ -46,12 +47,18 @@ class MealMonthlyGridService
             ->orderBy('name')
             ->get();
 
-        // All MealEntry records for this month, keyed by member_id + date
+        // All MealEntry records for this month, grouped by member_id and then
+        // keyed by Y-m-d. The 'date' attribute is cast to Carbon on MealEntry,
+        // whose __toString() is 'Y-m-d H:i:s' — a naive firstWhere('date',
+        // $dateStr) never matched, so previously-saved meals never pre-checked
+        // in the grid. Keying by toDateString() makes the per-day lookup a
+        // reliable string compare.
         $entries = MealEntry::query()
             ->where('mess_id', $messId)
             ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
             ->get()
-            ->groupBy('member_id');
+            ->groupBy('member_id')
+            ->map(fn ($rows) => $rows->keyBy(fn ($e) => $e->date instanceof Carbon ? $e->date->toDateString() : (string) $e->date));
 
         // Approved meal-off requests overlapping this month
         $mealOffs = MealOffRequest::query()
@@ -67,7 +74,7 @@ class MealMonthlyGridService
             ->where('mess_id', $messId)
             ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
             ->pluck('date')
-            ->map(fn ($d) => $d instanceof \Carbon\Carbon ? $d->toDateString() : (string) $d)
+            ->map(fn ($d) => $d instanceof Carbon ? $d->toDateString() : (string) $d)
             ->values()
             ->all();
 
@@ -77,7 +84,7 @@ class MealMonthlyGridService
             ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
             ->get()
             ->groupBy('member_id')
-            ->map(fn ($rows) => $rows->pluck('date')->map(fn ($d) => $d instanceof \Carbon\Carbon ? $d->toDateString() : (string) $d)->values()->all())
+            ->map(fn ($rows) => $rows->pluck('date')->map(fn ($d) => $d instanceof Carbon ? $d->toDateString() : (string) $d)->values()->all())
             ->all();
 
         // Build per-member date ranges for meal-off dates and closed dates
@@ -101,7 +108,7 @@ class MealMonthlyGridService
 
         $closedDatesSet = array_flip($closedDates);
 
-        $rows = $activeMembers->map(function (Member $member) use ($entries, $mealOffDatesByMember, $disabledDays, $closedDatesSet, $month, $start, $end, $messId) {
+        $rows = $activeMembers->map(function (Member $member) use ($entries, $mealOffDatesByMember, $disabledDays, $closedDatesSet, $month) {
             $memberEntries = $entries->get($member->id, collect());
             $memberMealOff = $mealOffDatesByMember[$member->id] ?? [];
             $memberDisabled = $disabledDays[$member->id] ?? [];
@@ -115,7 +122,8 @@ class MealMonthlyGridService
                 $date = $month->copy()->day($d);
                 $dateStr = $date->toDateString();
 
-                $entry = $memberEntries->firstWhere('date', $dateStr);
+                // $memberEntries is keyed by Y-m-d (see the query above).
+                $entry = $memberEntries->get($dateStr);
                 $isClosed = isset($closedDatesSet[$dateStr]);
                 $isMealOff = isset($memberMealOffSet[$dateStr]);
                 $isDisabled = isset($memberDisabledSet[$dateStr]);
@@ -128,7 +136,7 @@ class MealMonthlyGridService
                     'lunch' => $entry?->lunch ?? false,
                     'dinner' => $entry?->dinner ?? false,
                     'entry_id' => $entry?->id,
-                    'editable' => !$isClosed && !$isMealOff && !$isDisabled,
+                    'editable' => ! $isClosed && ! $isMealOff && ! $isDisabled,
                     'reason' => $isClosed ? __('Mess closed') : ($isMealOff ? __('Meal off') : ($isDisabled ? __('Disabled') : null)),
                 ];
             }
@@ -164,7 +172,7 @@ class MealMonthlyGridService
             ->where('mess_id', $messId)
             ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
             ->pluck('date')
-            ->map(fn ($d) => $d instanceof \Carbon\Carbon ? $d->toDateString() : (string) $d)
+            ->map(fn ($d) => $d instanceof Carbon ? $d->toDateString() : (string) $d)
             ->values()
             ->all();
 
