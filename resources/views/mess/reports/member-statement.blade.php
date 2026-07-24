@@ -46,7 +46,7 @@
     <form method="GET" action="{{ route('mess.reports.member-statement') }}" class="mb-6 flex flex-wrap items-end gap-3">
         <label class="block text-xs font-medium text-slate-600">
             {{ __('Member') }}
-            <select name="member_id" class="input mt-1 w-auto min-w-48">
+            <select name="member_id" class="input mt-1 w-auto min-w-48" onchange="this.form.submit()" aria-label="{{ __('Select member') }}">
                 @foreach ($members as $m)
                     <option value="{{ $m->id }}" @selected((int) $m->id === (int) $member->id)>{{ $m->name }}</option>
                 @endforeach
