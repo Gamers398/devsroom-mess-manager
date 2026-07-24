@@ -126,9 +126,12 @@ class MyStatementTest extends TestCase
         $response->assertSee('April 2026');
     }
 
-    public function test_statement_excludes_advance_applied_display(): void
+    public function test_statement_shows_human_readable_advance_applied_line(): void
     {
-        // Pitfall 3 guard: member view MUST NOT render advance_applied
+        // Quick-260724-jui Task C: member statement shows a human-readable
+        // "Advance applied" line (Bill − Paid − Advance applied = Due). The
+        // narrower Pitfall 3 guard stays: the raw `advance_applied` machine key
+        // must never leak into the rendered HTML.
         $member = Member::factory()->create([
             'mess_id' => Mess::activeId(),
             'status' => MemberStatus::ACTIVE,
@@ -147,6 +150,7 @@ class MyStatementTest extends TestCase
             ->get(route('my.reports.statement'));
 
         $response->assertOk();
+        $response->assertSee(__('Advance applied'));
         $response->assertDontSee('advance_applied');
     }
 }

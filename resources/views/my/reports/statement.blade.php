@@ -237,6 +237,10 @@
                     <dd class="text-base font-semibold text-slate-900">{{ Money::taka($row['bill_payments'] ?? 0) }}</dd>
                 </div>
                 <div>
+                    <dt class="text-xs text-slate-500">{{ __('Advance applied') }}</dt>
+                    <dd class="text-base font-semibold text-emerald-700">{{ Money::taka($row['advance_applied'] ?? 0) }}</dd>
+                </div>
+                <div>
                     <dt class="text-xs text-slate-500">{{ __('This month\'s due') }}</dt>
                     <dd class="text-base font-semibold text-rose-700">{{ Money::taka($row['due'] ?? 0) }}</dd>
                 </div>

@@ -139,9 +139,13 @@ class MemberStatementTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_statement_excludes_advance_applied_display(): void
+    public function test_statement_shows_human_readable_advance_applied_line(): void
     {
-        // Pitfall 3 guard: the view MUST NOT render the advance_applied value
+        // Quick-260724-jui Task C: the statement now shows a human-readable
+        // "Advance applied" line so Bill − Paid − Advance applied = Due reads
+        // transparently (the user asked where their advance deposit went). The
+        // Pitfall 3 guard is retained in narrower form: the raw `advance_applied`
+        // machine key must still never leak into the rendered HTML.
         $messId = Mess::activeId();
         $member = Member::factory()->create([
             'mess_id' => $messId,
@@ -163,7 +167,7 @@ class MemberStatementTest extends TestCase
             ]));
 
         $response->assertOk();
-        // The literal "advance_applied" must not appear as a label or raw value anywhere
-        $response->assertDontSee('advance_applied');
+        $response->assertSee(__('Advance applied'));   // human-readable label, rendered
+        $response->assertDontSee('advance_applied');   // raw machine key never leaks
     }
 }
