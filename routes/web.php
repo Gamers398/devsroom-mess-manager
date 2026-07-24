@@ -27,10 +27,12 @@ use App\Http\Controllers\Mess\MonthlyCorrectionController;
 use App\Http\Controllers\Mess\PaymentController;
 use App\Http\Controllers\Mess\ReportController;
 use App\Http\Controllers\Mess\ReportExportController;
+use App\Http\Controllers\Mess\WalletController;
 use App\Http\Controllers\My\MyBillPreviewController;
 use App\Http\Controllers\My\MyPaymentController;
 use App\Http\Controllers\My\MyReportController;
 use App\Http\Controllers\My\MyReportExportController;
+use App\Http\Controllers\My\MyWalletController;
 use App\Http\Controllers\MyController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationPreferenceController;
@@ -80,7 +82,6 @@ Route::middleware(['auth', 'role:super-admin'])
             ->middleware('throttle:10,1')
             ->name('test');
         Route::post('/run', [BackupController::class, 'runNow'])->name('run');
-        Route::post('/restore-test', [BackupController::class, 'runRestoreTest'])->name('restore-test.run');
         // Activity-log delete.
         Route::delete('/logs', [BackupController::class, 'clearLogs'])->name('logs.clear');
         Route::delete('/logs/{log}', [BackupController::class, 'destroyLog'])->name('logs.destroy');
@@ -220,7 +221,7 @@ Route::middleware(['auth', 'roles:super-admin,manager', EnsureMessExists::class]
     Route::get('mess/advance-balances/{member}/adjust', [AdvanceBalanceController::class, 'adjust'])->name('mess.advance-balances.adjust');
     Route::post('mess/advance-balances/{member}/adjust', [AdvanceBalanceController::class, 'storeAdjust'])->name('mess.advance-balances.storeAdjust');
 
-    Route::get('mess/members/{member}/wallet', [\App\Http\Controllers\Mess\WalletController::class, 'show'])->name('mess.members.wallet');
+    Route::get('mess/members/{member}/wallet', [WalletController::class, 'show'])->name('mess.members.wallet');
 
     Route::get('mess/bill-preview', [BillPreviewController::class, 'index'])->name('mess.bill-preview.index');
 
@@ -281,7 +282,7 @@ Route::middleware(['auth', 'roles:mess-member', 'password.change'])->group(funct
     Route::post('my/meal-off', [MyController::class, 'storeMealOff'])->name('my.meal-off.store');
     Route::get('my/payments', [MyPaymentController::class, 'index'])->name('my.payments');
     Route::get('my/bill-preview', [MyBillPreviewController::class, 'index'])->name('my.bill-preview');
-    Route::get('my/wallet', [\App\Http\Controllers\My\MyWalletController::class, 'index'])->name('my.wallet');
+    Route::get('my/wallet', [MyWalletController::class, 'index'])->name('my.wallet');
 
     // Member-side reports (RPT-05 own statement, RPT-06 aggregates-only monthly)
     // + Plan 04-03 exports (D-33 own statement, D-34 aggregates-only monthly).

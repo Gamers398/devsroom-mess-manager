@@ -137,18 +137,14 @@ class BackupControllerAuthTest extends TestCase
     }
 
     /**
-     * Test 5: super-admin POST /dashboard/backups/restore-test dispatches the
-     * backup:restore-test artisan command (mocked). T-06-03-01 confirms
-     * super-admin is allowed through the gate; this also confirms the action
-     * actually fires the underlying artisan command.
+     * Test 5: the restore-test endpoint was removed with the subsystem — a
+     * super-admin POST must now 404 (no route registered).
      */
-    public function test_super_admin_can_run_restore_test(): void
+    public function test_super_admin_restore_test_endpoint_is_gone(): void
     {
         $this->actingAs($this->superAdmin())
             ->post('/dashboard/backups/restore-test')
-            ->assertRedirect();
-
-        $this->assertContains('backup:restore-test', $this->artisanCalls);
+            ->assertNotFound();
     }
 
     /**

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Global backup configuration singleton (table `backup_configs`, row id=1).
  *
- * Not scoped to an active mess — backups cover the whole DB (like RestoreTest).
+ * Not scoped to an active mess — backups cover the whole DB (no mess_id column).
  *
  * `current()` reads the singleton row and memoizes it per process. It is
  * bootstrap-safe: any failure (missing table on a fresh clone, DB unreachable

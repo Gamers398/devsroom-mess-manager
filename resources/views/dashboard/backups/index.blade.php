@@ -13,14 +13,6 @@
                     {{ __('Backup now') }}
                 </button>
             </form>
-            @if ($restoreTestEnabled)
-                <form action="{{ route('dashboard.backups.restore-test.run') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-secondary">
-                        {{ __('Run restore-test') }}
-                    </button>
-                </form>
-            @endif
         </div>
     </header>
 

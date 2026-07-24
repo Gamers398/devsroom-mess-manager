@@ -26,8 +26,8 @@ use OwenIt\Auditing\Models\Audit;
  *
  * The Backups page is the single surface for backups: the backup file list
  * (download / restore / delete), the inline Configure form (schedule +
- * retention + per-provider storage toggles), the restore-test health badge,
- * and a backup activity log so a failed `backup:run` is visible instead of
+ * retention + per-provider storage toggles), and a backup activity log so a
+ * failed `backup:run` is visible instead of
  * silently swallowed. The destructive restore lives in RestoreController
  * (which orchestrates BackupRestoreService). This controller MUST NOT contain
  * restore logic itself (T-06-02-08).
@@ -89,33 +89,6 @@ class BackupController extends Controller
         }
 
         return $this->recordLog('backup', 'success', __('Backup completed.'), output: $output);
-    }
-
-    public function runRestoreTest(): RedirectResponse
-    {
-        if (! config('backup.restore_test_enabled', true)) {
-            return back()->with('success', __('Restore-test is disabled (BACKUP_RESTORE_TEST_ENABLED=false). Backups still run; only the verification step is off.'));
-        }
-
-        if ($preflight = $this->preflightWritable()) {
-            return $this->recordLog('restore_test', 'failure', $preflight, key: 'restore-test');
-        }
-
-        try {
-            $exitCode = (int) Artisan::call('backup:restore-test');
-            $output = (string) Artisan::output();
-        } catch (\Throwable $e) {
-            return $this->recordLog('restore_test', 'failure', $e->getMessage(), key: 'restore-test');
-        }
-
-        if ($exitCode !== 0) {
-            $reason = $this->extractFailureReason($output)
-                ?: __('Restore-test failed (exit code :code).', ['code' => $exitCode]);
-
-            return $this->recordLog('restore_test', 'failure', $reason, key: 'restore-test', output: $output);
-        }
-
-        return $this->recordLog('restore_test', 'success', __('Restore-test completed — see the health badge.'), key: 'restore-test', output: $output);
     }
 
     /**
@@ -333,7 +306,6 @@ class BackupController extends Controller
             // the whole Backups page and lock the super-admin out of configuring.
             'backupLogs' => $this->safeRecentLogs(),
             'backupLogUnavailable' => $this->backupLogUnavailable,
-            'restoreTestEnabled' => (bool) config('backup.restore_test_enabled', true),
         ];
     }
 

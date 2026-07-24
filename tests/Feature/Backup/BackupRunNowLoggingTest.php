@@ -173,24 +173,18 @@ class BackupRunNowLoggingTest extends TestCase
             ->assertSee(__('Save configuration'));
     }
 
-    public function test_restore_test_button_hidden_when_disabled(): void
+    public function test_restore_test_subsystem_is_removed(): void
     {
-        config(['backup.restore_test_enabled' => false]);
-
+        // The restore-test button + route + schedule were removed. The index
+        // page must not mention restore-test, and the old route must 404.
         $this->actingAs($this->superAdmin())
             ->get(route('dashboard.backups.index'))
             ->assertOk()
+            ->assertDontSee('restore-test')
             ->assertDontSee(__('Run restore-test'));
-    }
-
-    public function test_restore_test_on_demand_short_circuits_when_disabled(): void
-    {
-        config(['backup.restore_test_enabled' => false]);
 
         $this->actingAs($this->superAdmin())
-            ->from(route('dashboard.backups.index'))
-            ->post(route('dashboard.backups.restore-test.run'))
-            ->assertRedirect(route('dashboard.backups.index'))
-            ->assertSessionHas('success');
+            ->post('/dashboard/backups/restore-test')
+            ->assertNotFound();
     }
 }

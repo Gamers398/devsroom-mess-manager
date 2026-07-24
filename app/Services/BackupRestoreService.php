@@ -191,7 +191,6 @@ class BackupRestoreService
 
     /**
      * Lightweight DB spot-check: COUNT(*) on a few high-value tables must be > 0.
-     * The full per-table parity check lives in RestoreTestService.
      */
     protected function verifyDatabaseRestored(): void
     {
