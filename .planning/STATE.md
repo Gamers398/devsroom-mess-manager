@@ -20,7 +20,7 @@ progress:
 **Project:** Devsroom Mess Management
 **Current Phase:** 06
 **Current Plan:** 4 (final plan of Phase 06 — complete)
-**Last activity:** 2026-07-24 - Completed quick task 260724-jui: fixed member 403 ACCESS DENIED on /my (new idempotent role-reconciliation migration rescues members left role-less by the buggy user→mess-member rename pivot), added a reconciled This-month summary (Bill/Paid/Advance applied/Due) to the wallet (member + manager), and an Advance-applied line to both statement views. All affected + 54-test billing regression suite green. Deploy: run `php artisan migrate` (forward only) + `cache:clear` on prod.
+**Last activity:** 2026-07-24 - Completed quick task 260724-pm2: dashboard Total meals + Total Credit/Total Dues cards (replaced single net card), removed the restore-test subsystem entirely (service/command/model/table/route/schedule/config/connection), added a backup scheduler-health banner + scheduled-run activity logging (surfaces the missing server cron — the #6 root cause), and rewrote the README with a full per-feature how-to guide + balance-system explainer. #3 (why balances exist) + #6 (why no backups) answered in prose. Full suite 374 tests green. Deploy: `php artisan migrate` (drops empty restore_tests) + `config:clear` + `view:clear`, then install the per-minute `schedule:run` cron on CloudPanel.
 
 ## Project Reference
 
@@ -111,6 +111,7 @@ None.
 | 260722-xba | Fix 500 on member create (assignRole/audit unguarded), photo dropped on account-create, cron line uses PHP_BINARY, storage:link check | 2026-07-22 | 7104804 | [260722-xba-fix-cron-command-500-on-member-create-ba](./quick/260722-xba-fix-cron-command-500-on-member-create-ba/) |
 | 260723-m1 | Meal-rate ৳0.00 denominator fix; configurable meal weights UI; advance offsets live bill (+consume/net at close); expenses show/edit/delete + report View + vendor column; payments list Edit/Delete; preview invalidation on adjust | 2026-07-23 | 968d5bc | [260723-m1-mess-billing-fixes-crud](./quick/260723-m1-mess-billing-fixes-crud/) |
 | 260724-jui | Member 403 ACCESS DENIED on /my (reconcile stranded roles after user→mess-member rename); wallet reconciled This-month summary (Bill/Paid/Advance applied/Due); statement advance-applied line | 2026-07-24 | 2b9db9a | [260724-jui-fix-member-403-access-denied-wallet-bill](./quick/260724-jui-fix-member-403-access-denied-wallet-bill/) |
+| 260724-pm2 | Dashboard Total meals + Credit/Dues cards; removed restore-test subsystem entirely; backup scheduler-health banner + scheduled-run activity logging; README full feature guide + balance explainer | 2026-07-24 | 1800fd1 | [260724-pm2-dashboard-cards-remove-restore-test-back](./quick/260724-pm2-dashboard-cards-remove-restore-test-back/) |
 
 ## Session Notes
 
