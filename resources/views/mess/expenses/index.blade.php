@@ -12,6 +12,55 @@
         </div>
     </header>
 
+    <form method="GET" class="mb-5 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-4">
+        <div>
+            <label for="period" class="block text-xs font-medium text-slate-600">{{ __('Period') }}</label>
+            <select name="period" id="period" class="input mt-1">
+                @foreach ($periodOptions as $value => $label)
+                    <option value="{{ $value }}" @selected(($filters['period'] ?? '') === $value)>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <label for="year" class="block text-xs font-medium text-slate-600">{{ __('Year') }}</label>
+            <select name="year" id="year" class="input mt-1">
+                @php
+                    $currentYear = (int) ($filters['year'] ?? now()->year);
+                    $years = range(now()->year, now()->year - 4);
+                @endphp
+                @foreach ($years as $y)
+                    <option value="{{ $y }}" @selected($currentYear === (int) $y)>{{ $y }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <label for="month" class="block text-xs font-medium text-slate-600">{{ __('Month') }}</label>
+            <select name="month" id="month" class="input mt-1">
+                @php
+                    $currentMonth = (int) ($filters['month'] ?? now()->month);
+                    $monthNames = [1 => 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                @endphp
+                @for ($m = 1; $m <= 12; $m++)
+                    <option value="{{ $m }}" @selected($currentMonth === $m)>{{ __($monthNames[$m]) }}</option>
+                @endfor
+            </select>
+        </div>
+        <div>
+            <label for="kind" class="block text-xs font-medium text-slate-600">{{ __('Kind') }}</label>
+            <select name="kind" id="kind" class="input mt-1">
+                <option value="">{{ __('All') }}</option>
+                @foreach (\App\Support\ExpenseKind::ALL as $k)
+                    <option value="{{ $k }}" @selected(($filters['kind'] ?? null) === $k)>{{ __(ucfirst($k)) }}</option>
+                @endforeach
+            </select>
+        </div>
+        <p class="text-xs text-slate-500 sm:col-span-4">{{ __('Year and Month apply to the Specific month and Whole year modes.') }}</p>
+        <div class="flex flex-wrap items-end gap-2 sm:col-span-4">
+            <button type="submit" class="btn btn-dark touch-target">{{ __('Filter') }}</button>
+            <a href="{{ route('mess.expenses.index') }}" class="btn btn-ghost touch-target">{{ __('Reset') }}</a>
+        </div>
+    </form>
+
     {{-- Mobile cards (touch-friendly summary) --}}
     <div class="space-y-3 md:hidden">
         @forelse ($expenses as $expense)

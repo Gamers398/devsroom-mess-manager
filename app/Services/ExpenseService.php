@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Expense;
 use App\Models\Mess;
+use App\Support\Period;
 use App\Support\StorageProvider;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -13,6 +14,12 @@ class ExpenseService
     public function list(Request $request)
     {
         $query = Expense::query()->with(['category', 'purchasedByMember'])->latest('date');
+
+        // Default to the current month (This month / Specific month / Whole
+        // year / All time). Keeps a prior month's expenses in that month so
+        // the current month starts fresh — no data migration needed (expenses
+        // already carry a `date`).
+        Period::apply($query, $request);
 
         if ($kind = $request->query('kind')) {
             $query->whereHas('category', fn ($q) => $q->where('kind', $kind));

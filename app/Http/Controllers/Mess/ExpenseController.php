@@ -9,6 +9,7 @@ use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Services\ExpenseService;
 use App\Support\ExpenseKind;
+use App\Support\Period;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -27,7 +28,10 @@ class ExpenseController extends Controller
     {
         $expenses = $this->service->list($request);
 
-        return view('mess.expenses.index', compact('expenses'));
+        $periodOptions = Period::options();
+        $filters = $request->only(['period', 'year', 'month', 'kind']);
+
+        return view('mess.expenses.index', compact('expenses', 'periodOptions', 'filters'));
     }
 
     public function create(): View

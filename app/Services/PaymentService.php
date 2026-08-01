@@ -7,6 +7,7 @@ use App\Models\Mess;
 use App\Models\Payment;
 use App\Support\NotificationType;
 use App\Support\PaymentType;
+use App\Support\Period;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,20 +26,17 @@ class PaymentService
             ->latest('date')
             ->latest('id');
 
+        // From/To date pickers replaced by the period selector (This month /
+        // Specific month / Whole year / All time), defaulting to the current
+        // month. Member + method filters stay.
+        Period::apply($query, $request);
+
         if ($memberId = $request->query('member_id')) {
             $query->where('member_id', (int) $memberId);
         }
 
         if ($method = $request->query('method')) {
             $query->where('method', $method);
-        }
-
-        if ($from = $request->query('from')) {
-            $query->whereDate('date', '>=', $from);
-        }
-
-        if ($to = $request->query('to')) {
-            $query->whereDate('date', '<=', $to);
         }
 
         return $query->paginate(50)->withQueryString();

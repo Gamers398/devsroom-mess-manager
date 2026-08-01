@@ -30,16 +30,40 @@
             </select>
         </div>
         <div>
-            <label for="from" class="block text-xs font-medium text-slate-600">{{ __('From') }}</label>
-            <input type="date" name="from" id="from" value="{{ $filters['from'] ?? '' }}" class="input input-date mt-1" />
+            <label for="period" class="block text-xs font-medium text-slate-600">{{ __('Period') }}</label>
+            <select name="period" id="period" class="input mt-1">
+                @foreach ($periodOptions as $value => $label)
+                    <option value="{{ $value }}" @selected(($filters['period'] ?? '') === $value)>{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
         <div>
-            <label for="to" class="block text-xs font-medium text-slate-600">{{ __('To') }}</label>
-            <input type="date" name="to" id="to" value="{{ $filters['to'] ?? '' }}" class="input input-date mt-1" />
+            <label for="year" class="block text-xs font-medium text-slate-600">{{ __('Year') }}</label>
+            <div class="mt-1 grid grid-cols-2 gap-2">
+                <select name="year" id="year" class="input">
+                    @php
+                        $currentYear = (int) ($filters['year'] ?? now()->year);
+                        $years = range(now()->year, now()->year - 4);
+                    @endphp
+                    @foreach ($years as $y)
+                        <option value="{{ $y }}" @selected($currentYear === (int) $y)>{{ $y }}</option>
+                    @endforeach
+                </select>
+                <select name="month" id="month" class="input">
+                    @php
+                        $currentMonth = (int) ($filters['month'] ?? now()->month);
+                        $monthNames = [1 => 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                    @endphp
+                    @for ($m = 1; $m <= 12; $m++)
+                        <option value="{{ $m }}" @selected($currentMonth === $m)>{{ __($monthNames[$m]) }}</option>
+                    @endfor
+                </select>
+            </div>
         </div>
+        <p class="text-xs text-slate-500 sm:col-span-4">{{ __('Year and Month apply to the Specific month and Whole year modes.') }}</p>
         <div class="flex flex-wrap items-end gap-2 sm:col-span-4">
-            <button type="submit" class="btn btn-dark">{{ __('Filter') }}</button>
-            <a href="{{ route('mess.payments.index') }}" class="btn btn-ghost">{{ __('Reset') }}</a>
+            <button type="submit" class="btn btn-dark touch-target">{{ __('Filter') }}</button>
+            <a href="{{ route('mess.payments.index') }}" class="btn btn-ghost touch-target">{{ __('Reset') }}</a>
         </div>
     </form>
 

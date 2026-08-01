@@ -9,6 +9,7 @@ use App\Models\Member;
 use App\Models\Payment;
 use App\Services\PaymentService;
 use App\Support\MemberStatus;
+use App\Support\Period;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -26,9 +27,10 @@ class PaymentController extends Controller
             ->orderBy('name')
             ->pluck('name', 'id');
 
-        $filters = $request->only(['member_id', 'method', 'from', 'to']);
+        $periodOptions = Period::options();
+        $filters = $request->only(['member_id', 'method', 'period', 'year', 'month']);
 
-        return view('mess.payments.index', compact('payments', 'members', 'filters'));
+        return view('mess.payments.index', compact('payments', 'members', 'periodOptions', 'filters'));
     }
 
     public function create(): View
