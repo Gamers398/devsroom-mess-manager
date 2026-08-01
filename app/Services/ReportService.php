@@ -213,6 +213,7 @@ class ReportService
                 'advance_payments' => 0.0, // not tracked on the snapshot
                 'advance_applied' => (float) $row->advance_applied, // kept for parity; views MUST NOT display this
                 'due' => (float) $row->balance_due,
+                'brought_forward' => $row->brought_forward !== null ? (float) $row->brought_forward : 0.0,
                 'advance_balance' => $advanceBalance,
                 'due_balance' => $runningDue,
                 'active_days' => 0,

@@ -89,6 +89,7 @@ class MonthCloseService
                     'net_bill' => $netBill,
                     'payments_received' => $this->money($row['bill_payments'] ?? 0),
                     'balance_due' => $netBill,
+                    'brought_forward' => $this->money($row['brought_forward'] ?? 0),
                 ]));
             }
 

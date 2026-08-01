@@ -55,7 +55,7 @@ class BillPreviewService
 
     public function cacheKey(int $messId, int $year, int $month): string
     {
-        return "bill-preview:{$messId}:{$year}-".str_pad((string) $month, 2, '0', STR_PAD_LEFT);
+        return "bill-preview:v2:{$messId}:{$year}-".str_pad((string) $month, 2, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -83,6 +83,7 @@ class BillPreviewService
             'total_fixed' => 0.0,
             'days_in_month' => Carbon::create($year, $month, 1)->daysInMonth,
             'members' => [],
+            'brought_forward' => 0.0,
         ];
     }
 
@@ -185,6 +186,15 @@ class BillPreviewService
             $billPayments = $paymentsByMember[$member->id]['bill_payments'] ?? 0.0;
             $advanceBalance = $advanceBalances[$member->id]['balance'] ?? 0.0;
             $dueBalance = $advanceBalances[$member->id]['due_balance'] ?? 0.0;
+            $advancePayments = $paymentsByMember[$member->id]['advance_payments'] ?? 0.0;
+
+            // Brought forward = opening net carried in from the prior month.
+            // During an OPEN month the only things that mutate advance_balances
+            // are advance deposits and manual adjustments (close-time mutations
+            // have not run for this month). So opening net = current net minus
+            // this month's deposits. CONTEXT: brought_forward = (balance −
+            // due_balance) − advance_payments.
+            $broughtForward = round(($advanceBalance - $dueBalance) - $advancePayments, 2);
 
             // Advance offsets the live bill (D-07): after bill payments are
             // counted, any remaining bill is covered first by the member's
@@ -207,9 +217,10 @@ class BillPreviewService
                 'guest_total' => $guestTotal,
                 'bill' => $bill,
                 'bill_payments' => $billPayments,
-                'advance_payments' => $paymentsByMember[$member->id]['advance_payments'] ?? 0.0,
+                'advance_payments' => $advancePayments,
                 'advance_applied' => $advanceApplied,
                 'due' => $due,
+                'brought_forward' => $broughtForward,
                 'advance_balance' => $advanceBalance,
                 'due_balance' => $dueBalance,
                 'active_days' => $activeDays,
