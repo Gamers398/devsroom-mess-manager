@@ -95,16 +95,17 @@
                 <table class="min-w-full divide-y divide-slate-200 text-sm">
                     <thead class="bg-slate-50">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Member') }}</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Status') }}</th>
+                            <th rowspan="2" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Member') }}</th>
+                            <th rowspan="2" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Status') }}</th>
+                            <th colspan="4" class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('This month') }}</th>
+                            <th rowspan="2" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Brought forward') }}</th>
+                            <th rowspan="2" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Closing (net)') }}</th>
+                        </tr>
+                        <tr>
                             <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Meals') }}</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Meal cost') }}</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Fixed') }}</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Guest') }}</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Bill') }}</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Paid') }}</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Due') }}</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Balance') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -129,22 +130,33 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-right tabular-nums">{{ number_format((float) $row['meals'], 1) }}</td>
-                                <td class="px-4 py-3 text-right tabular-nums">{{ Money::taka($row['meal_cost']) }}</td>
-                                <td class="px-4 py-3 text-right tabular-nums">{{ Money::taka($row['fixed_share']) }}</td>
-                                <td class="px-4 py-3 text-right tabular-nums">{{ Money::taka($row['guest_total']) }}</td>
-                                <td class="px-4 py-3 text-right font-medium tabular-nums">{{ Money::taka($row['bill']) }}</td>
-                                <td class="px-4 py-3 text-right tabular-nums">{{ Money::taka($row['bill_payments']) }}</td>
-                                <td class="px-4 py-3 text-right tabular-nums text-rose-600">{{ Money::taka($row['due']) }}</td>
+                                <td class="px-4 py-3 text-right font-medium tabular-nums">{{ Money::taka($row['bill'] ?? 0) }}</td>
+                                <td class="px-4 py-3 text-right tabular-nums">{{ Money::taka($row['bill_payments'] ?? 0) }}</td>
+                                <td class="px-4 py-3 text-right tabular-nums text-rose-600">{{ Money::taka($row['due'] ?? 0) }}</td>
                                 @php
-                                    // True net — see the $totalNet note above. Open month nets
-                                    // this month's bill against the advance so the Balance column
-                                    // never contradicts the Due column (the old raw advance − due
-                                    // showed e.g. "Credit 2,000" next to "Due 878" for a member
-                                    // who prepaid, which looked impossible).
+                                    // Brought forward = opening net carried in from the prior
+                                    // month. A prior-month advance deposit not yet consumed shows
+                                    // here, NOT as this-month income. Guarded with ?? 0 so a
+                                    // pre-deploy snapshot row (NULL column) degrades to 0.00.
+                                    $rowBroughtForward = (float) ($row['brought_forward'] ?? 0);
+
+                                    // Closing (net) — the member's true running net (unchanged
+                                    // validated math). Open month: advance + payments − bill −
+                                    // prior due. Closed month: advance − due (the snapshot's
+                                    // advance/due ARE the settled closing figures).
                                     $rowNet = $isSnapshot
                                         ? (($row['advance_balance'] ?? 0) - ($row['due_balance'] ?? 0))
                                         : (($row['advance_balance'] ?? 0) + ($row['bill_payments'] ?? 0) - ($row['bill'] ?? 0) - ($row['due_balance'] ?? 0));
                                 @endphp
+                                <td class="px-4 py-3 text-right tabular-nums {{ $rowBroughtForward < 0 ? 'text-rose-600' : ($rowBroughtForward > 0 ? 'text-emerald-600' : 'text-slate-500') }}">
+                                    @if ($rowBroughtForward > 0)
+                                        {{ __('Credit') }} {{ Money::taka(abs($rowBroughtForward)) }}
+                                    @elseif ($rowBroughtForward < 0)
+                                        {{ __('Owes') }} {{ Money::taka(abs($rowBroughtForward)) }}
+                                    @else
+                                        {{ Money::taka(0) }}
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 text-right tabular-nums font-medium {{ $rowNet < 0 ? 'text-rose-600' : 'text-emerald-600' }}">
                                     {{ $rowNet < 0 ? __('Owes') : __('Credit') }} {{ Money::taka(abs($rowNet)) }}
                                 </td>
@@ -155,7 +167,7 @@
             </div>
         </section>
         <p class="mt-3 text-xs text-slate-500">
-            @lang('Balance = advance + payments − bill − prior due (the member\'s true net). Due = this month\'s bill still owed after payments and any advance applied. A member can show both a Credit balance and a Due — the advance is applied first, so the Due is what they actually still owe.')
+            @lang('Brought forward = the member\'s net position carried in from before this month (a prior-month advance deposit not yet consumed shows here, not as this-month income). This month = bill, payments, and the resulting due for the current month only. Closing (net) = brought forward + this-month net — the member\'s true running balance.')
         </p>
     @endif
 @endsection
