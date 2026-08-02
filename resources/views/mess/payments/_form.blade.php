@@ -21,7 +21,7 @@
     <select name="member_id" id="member_id" class="input mt-1 @error('member_id') input-error @enderror">
         <option value="">{{ __('Select member') }}</option>
         @foreach ($members as $id => $name)
-            <option value="{{ $id }}" @selected(old('member_id', $payment->member_id ?? null) == $id)>{{ $name }}</option>
+            <option value="{{ $id }}" @selected(old('member_id', $selectedMember ?? ($payment->member_id ?? null)) == $id)>{{ $name }}</option>
         @endforeach
     </select>
     @error('member_id') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror

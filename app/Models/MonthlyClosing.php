@@ -52,4 +52,20 @@ class MonthlyClosing extends Model implements AuditableContract
     {
         return $this->hasMany(MonthlyCorrection::class);
     }
+
+    public function pendingSettlements(): HasMany
+    {
+        return $this->hasMany(PendingSettlement::class, 'source_closing_id');
+    }
+
+    /**
+     * Route binding key = "YYYY-MM" (e.g. "2026-07") so closing URLs read
+     * /mess/closings/2026-07 instead of /mess/closings/{id}. Resolved back to
+     * the model by the Route::bind('closing', ...) binder in AppServiceProvider,
+     * which also accepts a raw numeric id for backward compatibility.
+     */
+    public function getRouteKey(): string
+    {
+        return $this->year.'-'.str_pad((string) $this->month, 2, '0', STR_PAD_LEFT);
+    }
 }

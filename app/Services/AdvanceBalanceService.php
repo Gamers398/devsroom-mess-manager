@@ -243,4 +243,120 @@ class AdvanceBalanceService
             return $row;
         });
     }
+
+    /**
+     * Apply a payment against the member's outstanding DUE settlements FIFO, and
+     * mirror the settlement's effect onto advance_balances so the NET
+     * (balance − due_balance) changes by exactly +payment.amount regardless of
+     * payment type. This is the payment-time half of pending-settlement capture.
+     *
+     * Ledger bookkeeping lives in PendingSettlementService::applyPayment() (it
+     * returns the total `applied`); the balance mutation lives HERE so this
+     * service stays the single owner of advance_balances. Both run in one
+     * DB::transaction so they commit or roll back together.
+     *
+     * Math (applied = portion that cleared dues; A = payment amount):
+     *   ADVANCE_DEPOSIT: applyPayment() already did balance += A. To reach the
+     *     invariant end state (balance += A − applied, due_balance −= applied)
+     *     we subtract `applied` from BOTH balance and due_balance — the same
+     *     net-off settle() does, scoped to the applied amount.
+     *   BILL_PAYMENT: applyPayment() was a no-op. Here we subtract `applied`
+     *     from due_balance and add the residual (A − applied) to balance so any
+     *     overpayment becomes credit.
+     *
+     * Returns `applied` (2-decimal string) for logging.
+     */
+    public function applySettlementToDue(Payment $payment): string
+    {
+        $amount = number_format((float) $payment->amount, 2, '.', '');
+
+        return DB::transaction(function () use ($payment, $amount) {
+            $applied = app(PendingSettlementService::class)->applyPayment($payment);
+
+            $row = AdvanceBalance::query()
+                ->where('member_id', $payment->member_id)
+                ->lockForUpdate()
+                ->firstOrCreate(
+                    ['mess_id' => Mess::activeId(), 'member_id' => $payment->member_id],
+                    ['balance' => 0, 'due_balance' => 0, 'last_updated_at' => now()]
+                );
+
+            if (bccomp($applied, '0', 2) <= 0) {
+                // Nothing to settle — balance already reflects applyPayment() (if any).
+                return $applied;
+            }
+
+            if ($payment->type === PaymentType::ADVANCE_DEPOSIT) {
+                $row->balance = bcsub((string) $row->balance, $applied, 2);
+                $row->due_balance = bcsub((string) $row->due_balance, $applied, 2);
+            } else {
+                $row->due_balance = bcsub((string) $row->due_balance, $applied, 2);
+                $residual = bcsub($amount, $applied, 2);
+                if (bccomp($residual, '0', 2) > 0) {
+                    $row->balance = bcadd((string) $row->balance, $residual, 2);
+                }
+            }
+
+            // Clamp rounding drift so due_balance never goes negative.
+            if (bccomp((string) $row->due_balance, '0', 2) < 0) {
+                $row->due_balance = '0.00';
+            }
+
+            $row->last_updated_at = now();
+            $row->save();
+
+            return $applied;
+        });
+    }
+
+    /**
+     * Reverse the settlement impact of a payment (mirror of applySettlementToDue),
+     * used by PaymentService::update and ::delete. Deletes the payment's
+     * settlement_applications (via PendingSettlementService::reversePayment, which
+     * returns the total that had been applied) and restores advance_balances so
+     * the net moves by exactly −payment.amount.
+     *
+     * MUST be called BEFORE applyPayment()/applySettlementToDue() for the new
+     * values during an update (same reverse-then-reapply order as reversePayment).
+     */
+    public function reverseSettlementFromDue(Payment $payment): void
+    {
+        DB::transaction(function () use ($payment) {
+            $applied = app(PendingSettlementService::class)->reversePayment($payment);
+
+            if (bccomp($applied, '0', 2) <= 0) {
+                return;
+            }
+
+            $row = AdvanceBalance::query()
+                ->where('member_id', $payment->member_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $row) {
+                return;
+            }
+
+            $amount = number_format((float) $payment->amount, 2, '.', '');
+
+            if ($payment->type === PaymentType::ADVANCE_DEPOSIT) {
+                // Reverse the net-off: add `applied` back to both columns.
+                $row->balance = bcadd((string) $row->balance, $applied, 2);
+                $row->due_balance = bcadd((string) $row->due_balance, $applied, 2);
+            } else {
+                // Reverse BILL_PAYMENT: restore due_balance, remove the residual credit.
+                $row->due_balance = bcadd((string) $row->due_balance, $applied, 2);
+                $residual = bcsub($amount, $applied, 2);
+                if (bccomp($residual, '0', 2) > 0) {
+                    $row->balance = bcsub((string) $row->balance, $residual, 2);
+                    if (bccomp((string) $row->balance, '0', 2) < 0) {
+                        $row->balance = '0.00';
+                    }
+                }
+            }
+
+            $row->last_updated_at = now();
+            $row->save();
+        });
+    }
 }

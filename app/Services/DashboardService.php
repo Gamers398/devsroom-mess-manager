@@ -76,11 +76,13 @@ class DashboardService
      * (total_members, today_meals, monthly_expenses) use the composite key
      * dash:counts:{mess_id}:{YYYY}-{MM} (1h TTL).
      *
-     * total_credit = Σ advance_balance (money members prepaid; mess holds it).
-     * total_dues   = Σ due_balance   (money members still owe).
-     * total_member_balance (net) = total_credit − total_dues, kept for
-     * backward compatibility even though the dashboard now shows the two
-     * gross figures separately (clearer than a single net number).
+     * total_credit = Σ of members' NET positive balances (money members
+     *   truly prepaid AFTER their carried dues net out; mess holds it).
+     * total_dues   = Σ of members' NET negative balances, as positive
+     *   (money members truly still owe AFTER their advance nets out).
+     * Each member is netted (balance − due_balance) BEFORE bucketing, so a
+     * member is never counted in both — mirrors AdvanceBalance::netBalance().
+     * total_member_balance (net) = total_credit − total_dues.
      *
      * @return array{
      *     total_members:int,
@@ -134,8 +136,19 @@ class DashboardService
         $preview = $this->preview->preview($now->year, $now->month);
         $members = $preview['members'] ?? [];
 
-        $totalCredit = (float) collect($members)->sum(fn ($m) => max(0.0, (float) ($m['advance_balance'] ?? 0)));
-        $totalDues = (float) collect($members)->sum(fn ($m) => max(0.0, (float) ($m['due_balance'] ?? 0)));
+        // Net each member FIRST (balance − due_balance), then bucket into
+        // credit vs dues — never sum the gross columns separately. A member
+        // who prepaid ৳6,000 but owes ৳4,000 is +৳2,000 net credit, NOT
+        // ৳6,000 credit AND ৳4,000 dues. Mirrors AdvanceBalance::netBalance()'s
+        // contract: "a member is never displayed as simultaneously owing and
+        // being owed". The net total (total_member_balance) is unchanged; only
+        // the previously double-counted gross split is corrected.
+        $netByMember = collect($members)->map(
+            fn ($m) => (float) ($m['advance_balance'] ?? 0) - (float) ($m['due_balance'] ?? 0)
+        );
+
+        $totalCredit = (float) $netByMember->sum(fn ($net) => max(0.0, $net));    // Σ positive nets = prepaid by members
+        $totalDues = (float) $netByMember->sum(fn ($net) => abs(min(0.0, $net))); // Σ negative nets (abs) = owed by members
 
         return [
             'total_members' => $counts['total_members'],

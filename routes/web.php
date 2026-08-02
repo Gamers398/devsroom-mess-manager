@@ -25,6 +25,7 @@ use App\Http\Controllers\Mess\MonthCloseController;
 use App\Http\Controllers\Mess\MonthlyClosingController;
 use App\Http\Controllers\Mess\MonthlyCorrectionController;
 use App\Http\Controllers\Mess\PaymentController;
+use App\Http\Controllers\Mess\PendingSettlementController;
 use App\Http\Controllers\Mess\ReportController;
 use App\Http\Controllers\Mess\ReportExportController;
 use App\Http\Controllers\Mess\WalletController;
@@ -222,6 +223,10 @@ Route::middleware(['auth', 'roles:super-admin,manager', EnsureMessExists::class]
     Route::post('mess/advance-balances/{member}/adjust', [AdvanceBalanceController::class, 'storeAdjust'])->name('mess.advance-balances.storeAdjust');
 
     Route::get('mess/members/{member}/wallet', [WalletController::class, 'show'])->name('mess.members.wallet');
+
+    // Pending settlements — cross-month, so NOT gated by month.open.
+    Route::get('mess/settlements', [PendingSettlementController::class, 'index'])->name('mess.settlements.index');
+    Route::post('mess/settlements/{settlement}/mark-settled', [PendingSettlementController::class, 'markSettled'])->name('mess.settlements.markSettled');
 
     Route::get('mess/bill-preview', [BillPreviewController::class, 'index'])->name('mess.bill-preview.index');
 

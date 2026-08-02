@@ -67,6 +67,7 @@ class PaymentService
         ]);
 
         $this->balances->applyPayment($payment);
+        $this->balances->applySettlementToDue($payment);
 
         // NOTIF-03: notify the member that a payment was recorded for them.
         $member = Member::find($payment->member_id);
@@ -106,7 +107,9 @@ class PaymentService
             // Reverse the original impact (operates on the pre-update snapshot),
             // then apply the new impact (operates on the refreshed payment).
             $this->balances->reversePayment($original);
+            $this->balances->reverseSettlementFromDue($original);
             $this->balances->applyPayment($payment->refresh());
+            $this->balances->applySettlementToDue($payment->refresh());
         });
 
         return $payment->refresh();
@@ -121,6 +124,7 @@ class PaymentService
     {
         DB::transaction(function () use ($payment) {
             $this->balances->reversePayment($payment);
+            $this->balances->reverseSettlementFromDue($payment);
             $payment->delete();
         });
     }

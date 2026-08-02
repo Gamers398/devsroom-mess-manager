@@ -10,6 +10,7 @@ use App\Models\MealEntry;
 use App\Models\MealOffRequest;
 use App\Models\MemberDisabledDay;
 use App\Models\Mess;
+use App\Models\MonthlyClosing;
 use App\Models\MessClosedDay;
 use App\Models\Payment;
 use App\Services\BillPreviewInvalidator;
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use League\Flysystem\Filesystem;
@@ -51,6 +53,34 @@ class AppServiceProvider extends ServiceProvider
         $this->registerGoogleDriveDriver();
         $this->registerBillPreviewInvalidation();
         $this->registerBackupFailureListeners();
+        $this->registerClosingRouteBinding();
+    }
+
+    /**
+     * Resolve the {closing} route parameter by "YYYY-MM" slug (e.g. 2026-07)
+     * so URLs read /mess/closings/2026-07. A raw numeric id still resolves for
+     * backward compatibility with old links/bookmarks. Mess-scoped for safety.
+     */
+    private function registerClosingRouteBinding(): void
+    {
+        Route::bind('closing', function (string $value) {
+            $messId = Mess::activeId();
+
+            if (ctype_digit($value)) {
+                return MonthlyClosing::query()
+                    ->where('mess_id', $messId)
+                    ->where('id', (int) $value)
+                    ->firstOrFail();
+            }
+
+            [$year, $month] = array_pad(explode('-', $value, 2), 2, null);
+
+            return MonthlyClosing::query()
+                ->where('mess_id', $messId)
+                ->where('year', (int) $year)
+                ->where('month', (int) $month)
+                ->firstOrFail();
+        });
     }
 
     /**

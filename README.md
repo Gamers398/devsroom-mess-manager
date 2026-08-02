@@ -57,7 +57,8 @@ A web-based mess management system built for Bangladesh messes — bachelor host
 - **Fixed monthly expenses** — rent, cook salary, internet, electricity, water, gas, security, etc. Split equally among active members (prorated for mid-month joiners/leavers). Fixed expenses do **not** enter the meal rate (FIXED-04).
 - **Payments + advance balance** — manager records payments (Cash, bKash, Nagad, Rocket, Bank) as either `bill_payment` or `advance_deposit`; advance carries forward month-to-month and auto-adjusts against the next bill.
 - **Live bill preview** — cached (1h TTL, mess-scoped key). Manager sees "if we closed today, meal rate would be ৳X" on the dashboard; member sees their own running bill on `/my`.
-- **Month-close** — queued (`CloseMonthJob` on the `database` queue), idempotent (`UNIQUE(mess_id, year, month)` + `firstOrCreate` + `wasRecentlyCreated`), hard-locked post-close via `EnsureMonthIsOpen` middleware on 11 write routes, immutable snapshot to `monthly_closings` + `monthly_member_summaries`. Corrections go through a separate `monthly_corrections` table — the snapshot stays immutable (CLOSE-12).
+- **Month-close** — queued (`CloseMonthJob` on the `database` queue), idempotent (`UNIQUE(mess_id, year, month)` + `firstOrCreate` + `wasRecentlyCreated`), hard-locked post-close via `EnsureMonthIsOpen` middleware on 11 write routes, immutable snapshot to `monthly_closings` + `monthly_member_summaries`. Corrections go through a separate `monthly_corrections` table — the snapshot stays immutable (CLOSE-12). Each uncleared due/credit is also snapshotted as a **pending settlement** (see below). Closing pages use month-based URLs (`/mess/closings/2026-07`).
+- **Pending settlements** — when a month closes, any member who still owes (a **due**) or is still owed (a **credit**) is snapshotted as a tracked pending settlement tied to that month, instead of silently carrying forward and merging into next month's running balance. **Dues auto-clear FIFO** when a payment is recorded (oldest month first); **credits clear manually** via a "Mark settled" action after a real refund. A dedicated screen shows total to collect / to pay out / net cash to handle. Additive layer — every member's net position is unchanged, so all reports/wallet/dashboard stay correct.
 - **4 reports** — Monthly Report (totals + per-member), Member Statement (8-section ledger per member), Expense Report (filter by date/category/month), Payment Report (filter by member/method/date).
 - **Manager dashboard** (`/home`) — 7 stat cards: **Total Members**, **Today's Meals**, **Total Meals (this month)**, **Current Meal Rate**, **Monthly Expenses**, **Total Credit (advance)** and **Total Dues** — plus 4 report widgets (Members with dues, Top eaters this month, Spend vs collection bar, Expense-category doughnut) and a pending-meal-off alert banner.
 - **Member `/my` dashboard** — 4 Overview cards (My Meals, My Bill, My Advance, My Payment History) + tabs for Profile, Meals, Meal off, Payments, My reports.
@@ -194,6 +195,9 @@ php artisan view:clear
 
 # Demo dataset (guarded — refuses in production without --force)
 php artisan db:seed:perf-demo
+
+# Backfill pending settlements for months closed before the feature shipped
+php artisan settlements:backfill           # add --reconcile to cross-check the ledger vs live balances
 ```
 
 ---
@@ -220,7 +224,7 @@ For a deep walkthrough (bill math, month-close flow, cache key strategy, role/ID
 **Layer structure:**
 - `app/Http/Controllers/Mess/*` — manager routes under `role:admin` + `EnsureMessExists` middleware
 - `app/Http/Controllers/My/*` — member routes under `role:user` (no `{member}` URL param — IDOR-structurally-impossible, see AGENTS.md)
-- `app/Services/*` — 17 services: `BillPreviewService`, `DashboardService`, `MealGridService`, `MonthCloseService`, `ReportService`, `MemberStatementService`, `ChartBucketingService`, etc.
+- `app/Services/*` — 18 services: `BillPreviewService`, `DashboardService`, `MealGridService`, `MonthCloseService`, `PendingSettlementService`, `ReportService`, `MemberStatementService`, `ChartBucketingService`, etc.
 - `app/Jobs/CloseMonthJob.php` — queued month-close (idempotent, FOR UPDATE, snapshot)
 - `app/Http/Middleware/EnsureMonthIsOpen.php` — hard-lock on 11 write routes for closed months
 - `app/Providers/AppServiceProvider.php` — post-login redirect by role + the cache invalidation hook
@@ -283,7 +287,7 @@ The app keeps **two separate money figures per member** in `advance_balances`:
 - **Credit (advance)** — money the member *prepaid*; the mess holds it for them.
 - **Dues** — unpaid bill the member *owes* the mess.
 
-They're stored separately (not merged into one running total) because at **month-close** the math must not double-count: any unused advance credit is *applied* to offset the new bill first, and only the remainder becomes dues. Collapsing them would lose the distinction between "prepaid ৳500" and "owes ৳500" — which matters separately for collecting cash and for refunding. For **display**, surfaces show a single **net** = credit − dues, so a member is never shown as simultaneously owing and being owed — but the two columns stay separate underneath for correct settlement math. The dashboard's **Total Credit (advance)** and **Total Dues** cards show the two gross totals; the **Members with dues** widget lists who currently owes.
+They're stored separately (not merged into one running total) because at **month-close** the math must not double-count: any unused advance credit is *applied* to offset the new bill first, and only the remainder becomes dues. Collapsing them would lose the distinction between "prepaid ৳500" and "owes ৳500" — which matters separately for collecting cash and for refunding. For **display**, surfaces show a single **net** = credit − dues, so a member is never shown as simultaneously owing and being owed — but the two columns stay separate underneath for correct settlement math. The dashboard's **Total Credit (advance)** and **Total Dues** cards each **net the member first** (a member who prepaid ৳6,000 but owes ৳4,000 counts as ৳2,000 credit, not in both buckets); the **Members with dues** widget lists who currently owes.
 
 ### 10. Live bill preview  (`Finance → Bill preview` + dashboard + `/my`)
 - Cached (1 h, mess-scoped). Shows "if we closed today, the meal rate would be ৳X" and each member's running bill. Updates within ~2 s of any meal/expense/payment/meal-off change (cache is invalidated on save).
@@ -293,16 +297,26 @@ They're stored separately (not merged into one running total) because at **month
 2. **Close month** → runs a queued, idempotent job (`CloseMonthJob`). Re-clicking for the same month is a no-op.
 3. The month is then **hard-locked** (11 write routes blocked via `EnsureMonthIsOpen`); an immutable snapshot is written to `monthly_closings` + `monthly_member_summaries`. Managers + super-admins get a "month closed" notification.
 
-### 12. Corrections  (`Closing → Corrections`)
+### 12. Pending settlements  (`Finance → Pending settlements`)
+When a month closes, any uncleared **due** (member owes the mess) or **credit** (mess owes the member) is snapshotted as a tracked pending settlement tied to that month — it no longer silently merges into next month's running balance. Each closed month's outstanding amounts stay visible until a real cash transaction clears them.
+
+- **Dues clear automatically (FIFO)** — record a payment for a member who owes from a prior month and it applies oldest-month-first against their outstanding dues, clearing them. Each due row has a **Record payment** button that opens the payment form pre-filled with that member.
+- **Credits clear manually** — after you refund a member in real life, click **Mark settled** on the credit row; it consumes the credit and writes a wallet-ledger trail. (A dedicated refund payment type is on the roadmap.)
+- **Corrections** create settlement rows too (`source = correction`), so after-the-fact due/credit changes stay tracked.
+- Three cards top the screen: **To collect** (total dues outstanding), **To pay out** (total credits outstanding), **Net cash to handle** (collect − pay out).
+
+The feature is an additive layer over the existing balance engine — every member's net position (`credit − dues`) is unchanged, so reports, the wallet, and the dashboard remain correct. Months closed *before* this feature shipped are backfilled with `php artisan settlements:backfill` (add `--reconcile` to cross-check the settlement ledger against live balances).
+
+### 13. Corrections  (`Closing → Corrections`)
 - Need to adjust a *closed* month? Use **Corrections** (applies immediately to balances; the original snapshot stays immutable). The closed-month write-lock does not block corrections by design.
 
-### 13. Reports & exports  (`Reports`)
+### 14. Reports & exports  (`Reports`)
 - **Monthly Report** (totals + per-member), **Member Statement** (8-section ledger), **Expense Report**, **Payment Report** — each with a month/member/category filter and **PDF** + **Excel** export. Members can export their own statement + aggregates-only monthly report from **My → Reports**.
 
-### 14. Reading the dashboard  (`/home`)
-- **Total Members** (active), **Today's Meals** + **Total Meals (this month)**, **Current Meal Rate** (৳/meal), **Monthly Expenses** (bazar + fixed), **Total Credit (advance)** + **Total Dues**. Widgets: **Members with dues** (who to follow up with), **Top eaters**, **Spend vs collection**, **Expense categories**.
+### 15. Reading the dashboard  (`/home`)
+- **Total Members** (active), **Today's Meals** + **Total Meals (this month)**, **Current Meal Rate** (৳/meal), **Monthly Expenses** (bazar + fixed), **Total Credit (advance)** + **Total Dues** (each netted per member). Widgets: **Members with dues** (who to follow up with), **Top eaters**, **Spend vs collection**, **Expense categories**.
 
-### 15. Notifications  (`Settings → Notifications`)
+### 16. Notifications  (`Settings → Notifications`)
 - Toggle channels (in-app bell, email, WhatsApp, Telegram, SMS) and configure credentials per channel. Channels fail open — a down provider never blocks the in-app record or the caller's transaction. Members receive due-reminders, payment confirmations, meal-off decisions; managers receive month-close + backup-failure broadcasts.
 
 ---
@@ -377,7 +391,7 @@ For the full VPS/Forge production-hardening runbook, see [**DEPLOYMENT.md**](./D
 
 ## Roadmap
 
-**Recently shipped** — member soft/permanent delete, name-based member URLs, duplicate-member prevention, role-based grouped sidebar, and multi-channel notifications (email / WhatsApp / Telegram / SMS).
+**Recently shipped** — **pending settlements** (tracked month-to-month due/credit clearing — dues auto-settle FIFO on payment, credits via manual "Mark settled"), month-based closing URLs (`/mess/closings/2026-07`), dashboard net-bucketing (Total Credit / Total Dues now net each member first), member soft/permanent delete, name-based member URLs, duplicate-member prevention, role-based grouped sidebar, and multi-channel notifications (email / WhatsApp / Telegram / SMS).
 
 Still ahead:
 

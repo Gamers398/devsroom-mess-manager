@@ -33,14 +33,18 @@ class PaymentController extends Controller
         return view('mess.payments.index', compact('payments', 'members', 'periodOptions', 'filters'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         $members = Member::query()
             ->where('status', MemberStatus::ACTIVE)
             ->orderBy('name')
             ->pluck('name', 'id');
 
-        return view('mess.payments.create', compact('members'));
+        // Allow deep-linking with a pre-selected member (?member_id=), used by
+        // the "Record payment" button on due rows of the Pending settlements page.
+        $selectedMember = $request->query('member_id');
+
+        return view('mess.payments.create', compact('members', 'selectedMember'));
     }
 
     public function store(StorePaymentRequest $request): RedirectResponse

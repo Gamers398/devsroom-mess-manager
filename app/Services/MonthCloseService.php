@@ -133,6 +133,33 @@ class MonthCloseService
                 $summary->save();
             }
 
+            // Snapshot each member's residual as a tracked pending settlement so
+            // it is cleared by a later payment (dues, FIFO) or a manual "Mark
+            // settled" (credits) — instead of silently carrying forward merged
+            // into next month's running balance. closing_balance is the frozen,
+            // signed post-settlement net: negative = owes (due), positive = owed
+            // (credit). Zero-residual members are skipped.
+            $settlementService = app(PendingSettlementService::class);
+            foreach ($summaries as $summary) {
+                $closingBalance = (string) $summary->closing_balance;
+
+                if (bccomp($closingBalance, '0', 2) === 0) {
+                    continue;
+                }
+
+                $kind = bccomp($closingBalance, '0', 2) < 0 ? 'due' : 'credit';
+
+                $settlementService->captureFromClose([
+                    'mess_id' => Mess::activeId(),
+                    'source_closing_id' => $closing->id,
+                    'source_year' => $year,
+                    'source_month' => $month,
+                    'member_id' => $summary->member_id,
+                    'kind' => $kind,
+                    'amount' => ltrim($closingBalance, '-'),
+                ]);
+            }
+
             // Invalidate the cached preview for the closed month.
             app(BillPreviewService::class)->invalidate($year, $month);
 

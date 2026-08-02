@@ -44,7 +44,18 @@ class MonthlyCorrectionService
             // Apply to advance (amount > 0) or due (amount < 0) immediately (D-24).
             // Normalize to a 2-decimal string so the carry-forward stays in BC
             // math end-to-end (CR-03: "decimal money, never float").
-            $this->balances->carryForward($memberId, number_format($amount, 2, '.', ''));
+            $amountStr = number_format($amount, 2, '.', '');
+            $this->balances->carryForward($memberId, $amountStr);
+
+            // Track the correction as a pending settlement (source='correction')
+            // so after-the-fact due/credit changes are visible on the settlements
+            // screen and clearable like close-time residuals. carryForward treats
+            // positive amounts as credit (balance) and negative as due (due_balance).
+            app(PendingSettlementService::class)->captureFromCorrection(
+                $correction,
+                bccomp($amountStr, '0', 2) < 0 ? 'due' : 'credit',
+                ltrim($amountStr, '-'),
+            );
 
             // Invalidate the preview cache for the applied-to month so future previews
             // pick up the balance change (D-26).
