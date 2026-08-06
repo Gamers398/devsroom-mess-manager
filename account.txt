@@ -1,0 +1,18 @@
+##admin
+mess@wpmhs.com
+
+123456789
+
+
+
+##Manager
+
+mhs@wpmhs.com
+123456789
+
+##User
+user@gmail.com
+123456789
+
+manager@demo.test / password (admin) 
+member@demo.test / password (user) · admin@tyro.project

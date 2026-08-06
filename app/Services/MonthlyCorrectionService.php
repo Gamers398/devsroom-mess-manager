@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Member;
+use App\Models\Mess;
+use App\Models\MonthlyClosing;
+use App\Models\MonthlyCorrection;
+use App\Support\NotificationType;
+use Illuminate\Support\Facades\DB;
+
+class MonthlyCorrectionService
+{
+    public function __construct(private readonly AdvanceBalanceService $balances) {}
+
+    /**
+     * Record a signed correction against a closed month and apply it immediately
+     * to the member's advance/due balance (D-24). The closed snapshot is never
+     * rewritten (CLOSE-09).
+     *
+     * @param  array<string, mixed>  $notificationData  Optional extra payload.
+     */
+    public function create(
+        MonthlyClosing $closing,
+        int $memberId,
+        float $amount,
+        string $reason,
+        int $appliedToYear,
+        int $appliedToMonth,
+        int $enteredBy,
+    ): MonthlyCorrection {
+        return DB::transaction(function () use ($closing, $memberId, $amount, $reason, $appliedToYear, $appliedToMonth, $enteredBy) {
+            $correction = MonthlyCorrection::create([
+                'mess_id' => Mess::activeId(),
+                'monthly_closing_id' => $closing->id,
+                'member_id' => $memberId,
+                'applied_to_year' => $appliedToYear,
+                'applied_to_month' => $appliedToMonth,
+                'amount' => $amount,
+                'reason' => $reason,
+                'entered_by' => $enteredBy,
+            ]);
+
+            // Apply to advance (amount > 0) or due (amount < 0) immediately (D-24).
+            // Normalize to a 2-decimal string so the carry-forward stays in BC
+            // math end-to-end (CR-03: "decimal money, never float").
+            $amountStr = number_format($amount, 2, '.', '');
+            $this->balances->carryForward($memberId, $amountStr);
+
+            // Track the correction as a pending settlement (source='correction')
+            // so after-the-fact due/credit changes are visible on the settlements
+            // screen and clearable like close-time residuals. carryForward treats
+            // positive amounts as credit (balance) and negative as due (due_balance).
+            app(PendingSettlementService::class)->captureFromCorrection(
+                $correction,
+                bccomp($amountStr, '0', 2) < 0 ? 'due' : 'credit',
+                ltrim($amountStr, '-'),
+            );
+
+            // Invalidate the preview cache for the applied-to month so future previews
+            // pick up the balance change (D-26).
+            app(BillPreviewService::class)->invalidate($appliedToYear, $appliedToMonth);
+
+            // Notify the affected member's linked user (NOTIF-04 general-purpose channel).
+            $member = Member::find($memberId);
+            if ($member?->user_id) {
+                // Pass the live NET amount owed so the reminder reads "outstanding
+                // due of ৳X" instead of ৳0 (the payload previously omitted due_balance).
+                $ab = \App\Models\AdvanceBalance::where('member_id', $memberId)->first();
+                $netDue = $ab ? max(0.0, -$ab->netBalance()) : 0.0;
+
+                app(NotificationService::class)->send($member->user, NotificationType::DUE_REMINDER, [
+                    'due_balance' => $netDue,
+                    'year' => $appliedToYear,
+                    'month' => $appliedToMonth,
+                    'amount' => $amount,
+                    'reason' => $reason,
+                    'closing_id' => $closing->id,
+                ]);
+            }
+
+            return $correction;
+        });
+    }
+}
