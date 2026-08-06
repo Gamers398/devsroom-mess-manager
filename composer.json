@@ -6,7 +6,9 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.3",
+        "php": "^8.4", 
+        "ext-gd": "*",
+        "ext-zip": "*",
         "barryvdh/laravel-dompdf": "^3.1",
         "hasinhayder/tyro": "^1.10",
         "hasinhayder/tyro-dashboard": "^1.36",
