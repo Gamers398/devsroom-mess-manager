@@ -43,13 +43,15 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if (config('app.env') === 'production') {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
         Carbon::setLocale('en');
 
         // Apply DB-stored cloud credentials BEFORE the google-drive driver is
         // registered and before any disk is resolved, so every request/command
         // sees the UI-configured Google Drive + R2 values (with .env fallback).
         $this->applyCloudCredentials();
-
         $this->registerGoogleDriveDriver();
         $this->registerBillPreviewInvalidation();
         $this->registerBackupFailureListeners();
