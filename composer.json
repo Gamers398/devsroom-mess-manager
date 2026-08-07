@@ -6,7 +6,8 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.4", 
+        "php": "^8.4",
+        "ext-bcmath": "*",
         "ext-gd": "*",
         "ext-zip": "*",
         "barryvdh/laravel-dompdf": "^3.1",
