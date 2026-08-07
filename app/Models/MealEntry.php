@@ -18,16 +18,15 @@ class MealEntry extends Model implements AuditableContract
 {
     use Auditable, BelongsToActiveMess, HasFactory;
 
+    protected $dateFormat = 'Y-m-d';
+
     protected function casts(): array
     {
         return [
-            'date' => 'date',
-            'breakfast' => 'boolean',
-            'lunch' => 'boolean',
-            'dinner' => 'boolean',
-            'guest_breakfast' => 'decimal:2',
-            'guest_lunch' => 'decimal:2',
-            'guest_dinner' => 'decimal:2',
+            'date' => 'date:Y-m-d',
+            'breakfast' => 'integer',
+            'lunch' => 'integer',
+            'dinner' => 'integer',
         ];
     }
 
