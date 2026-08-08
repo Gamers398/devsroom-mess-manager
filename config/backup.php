@@ -30,7 +30,7 @@ return [
                  * The MySQL dump is added by spatie regardless of this list.
                  */
                 'include' => [
-                    storage_path('app/public'),
+                    storage_path('db/database.sqlite'),
                 ],
 
                 /*
@@ -76,9 +76,7 @@ return [
              * The mysqldump behavior is customized via the 'dump' key on the mysql
              * connection in config/database.php (DUMP_BINARY_PATH, single-transaction).
              */
-            'databases' => [
-                env('DB_CONNECTION', 'mysql'),
-            ],
+            'databases' => [],
         ],
 
         /*
