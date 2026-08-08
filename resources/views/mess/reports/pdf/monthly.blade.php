@@ -3,6 +3,26 @@
 @section('title', __('Monthly Report') . ' — ' . ($period ?? ''))
 
 @section('report-body')
+<style>
+    /* Fix missing Taka symbol by forcing DejaVu Sans font */
+    * {
+        font-family: 'DejaVu Sans', sans-serif !important;
+    }
+    
+    /* Layout table for the summary stats */
+    .totals-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+    }
+    .totals-table td {
+        padding: 6px 10px;
+        font-size: 11px;
+        width: 33.33%;
+    }
+</style>
     @php
         use App\Support\Money;
         $members = $data['members'] ?? [];
@@ -10,15 +30,21 @@
         $totalAdvance = collect($members)->sum('advance_balance');
     @endphp
 
-    <div class="totals-grid">
-        <div><span class="label">{{ __('Members') }}:</span> {{ count($members) }}</div>
-        <div><span class="label">{{ __('Meals') }}:</span> {{ number_format((float) ($data['total_meals'] ?? 0), 1) }}</div>
-        <div><span class="label">{{ __('Meal rate') }}:</span> {{ Money::taka($data['meal_rate'] ?? 0) }} / {{ __('meal') }}</div>
-        <div><span class="label">{{ __('Total bazar') }}:</span> {{ Money::taka($data['total_bazar'] ?? 0) }}</div>
-        <div><span class="label">{{ __('Total fixed') }}:</span> {{ Money::taka($data['total_fixed'] ?? 0) }}</div>
-        @php $pdfNet = collect($members)->sum(fn ($r) => ($r['advance_balance'] ?? 0) - ($r['due_balance'] ?? 0)); @endphp
-        <div><span class="label">{{ __('Balance (net)') }}:</span> {{ ($pdfNet < 0 ? __('Owes') : __('Credit')).' '.Money::taka(abs($pdfNet)) }}</div>
-    </div>
+    <table class="totals-table">
+    <tr>
+        <td><strong>{{ __('Members') }}:</strong> {{ count($members) }}</td>
+        <td><strong>{{ __('Meals') }}:</strong> {{ number_format((float) ($data['total_meals'] ?? 0), 1) }}</td>
+        <td><strong>{{ __('Meal rate') }}:</strong> {{ Money::taka($data['meal_rate'] ?? 0) }} / meal</td>
+    </tr>
+    <tr>
+        <td><strong>{{ __('Total bazar') }}:</strong> {{ Money::taka($data['total_bazar'] ?? 0) }}</td>
+        <td><strong>{{ __('Total fixed') }}:</strong> {{ Money::taka($data['total_fixed'] ?? 0) }}</td>
+        <td>
+            @php $pdfNet = collect($members)->sum(fn ($r) => ($r['advance_balance'] ?? 0) - ($r['due_balance'] ?? 0)); @endphp
+            <strong>{{ __('Balance (net)') }}:</strong> {{ ($pdfNet < 0 ? __('Owes') : __('Credit')) . ' ' . Money::taka(abs($pdfNet)) }}
+        </td>
+    </tr>
+</table>
 
     @if (! empty($members))
         {{-- D-13: column compaction via pdf-table-compact --}}
