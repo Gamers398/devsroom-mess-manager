@@ -1,2 +1,2 @@
-[pkgs]
-apt = ["sqlite3"]
+[phases.setup]
+aptPkgs = ["sqlite3"]
