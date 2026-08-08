@@ -3,13 +3,23 @@
 @section('title', __('Monthly Report') . ' — ' . ($period ?? ''))
 
 @section('report-body')
+@php
+    // Define $members from controller data
+    $members = $data['members'] ?? [];
+
+    // Currency formatting helper for PDF
+    $formatTk = function($amount) {
+        return 'Tk. ' . number_format((float) ($amount ?? 0), 2);
+    };
+@endphp
+
 <style>
-    /* Fix font and layout */
+    /* Force font that renders cleanly */
     * {
         font-family: 'DejaVu Sans', sans-serif !important;
     }
 
-    /* Pushes table down to clear the parent template header */
+    /* Pushes table down to clear parent template header */
     .totals-table {
         width: 100%;
         border-collapse: collapse;
@@ -26,13 +36,6 @@
         width: 33.33%;
     }
 </style>
-
-@php
-    // Helper function to format currency for PDF without missing glyph boxes
-    $formatTk = function($amount) {
-        return 'Tk. ' . number_format((float) ($amount ?? 0), 2);
-    };
-@endphp
 
 <table class="totals-table">
     <tr>
