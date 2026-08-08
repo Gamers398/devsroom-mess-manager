@@ -35,8 +35,8 @@ $webauthnToken = $passkeysEnabled ? ' webauthn' : '';
 
             <!-- Header -->
             <div class="form-header">
-                <h2>Officers' Mess Manager</h2>
-                <p style="font-weight: bold; margin-bottom: 4px;">Jamtola Moor, Academy Road, Mymensingh</p>
+                <h2>Officers' Mess</h2>
+                <p style="font-weight: bold; margin-bottom: 4px;">Academy Road, Mymensingh</p>
 
         {{-- Keep the dynamic instruction text below the address --}}
     @if($features['disable_password'] ?? false)
@@ -52,8 +52,6 @@ $webauthnToken = $passkeysEnabled ? ' webauthn' : '';
         <p>Enter your email or username and password below to log in</p>
         @elseif(($loginField ?? 'email') === 'username')
         <p>Enter your username and password below to log in</p>
-        @else
-        <p>Enter your email and password below to log in</p>
          @endif
     @endif
             </div>
