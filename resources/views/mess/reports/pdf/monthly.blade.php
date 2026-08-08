@@ -1,6 +1,10 @@
 @extends('layouts.pdf')
 
-@section('title', __('Monthly Report') . ' — ' . ($period ?? ''))
+@section('title', __('Monthly Report') . ' - ' . ($period ?? ''))
+
+{{-- Suppress default header from parent layout to fix double header --}}
+@section('header')
+@endsection
 
 @section('report-body')
 @php
@@ -21,14 +25,20 @@
         font-family: 'DejaVu Sans', sans-serif !important;
     }
 
+    /* Hide parent layout header elements if rendered outside section */
+    .header, header, .pdf-header, .brand-header, .report-header {
+        display: none !important;
+    }
+
     /* Center title header in upper middle */
     .report-title-header {
         text-align: center;
-        margin-bottom: 25px;
+        margin-top: 10px;
+        margin-bottom: 20px;
         width: 100%;
     }
     .report-title-header h2 {
-        margin: 0 0 5px 0;
+        margin: 0 0 4px 0;
         font-size: 20px;
         color: #111;
         text-transform: uppercase;
@@ -36,23 +46,22 @@
     }
     .report-title-header p {
         margin: 0;
-        font-size: 13px;
-        color: #555;
+        font-size: 12px;
+        color: #444;
     }
 
-    /* Summary totals grid table */
+    /* Summary totals box table */
     .totals-table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 20px;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
+        background-color: #fafafa;
     }
     .totals-table td {
-        padding: 8px 12px;
+        padding: 8px 10px;
         font-size: 11px;
         width: 33.33%;
-        border: 1px solid #dee2e6;
+        border: 1px solid #444444; /* Slightly bold defined border */
     }
 
     /* Main Table Styles */
@@ -62,12 +71,12 @@
         margin-top: 10px;
     }
     .pdf-table-compact th, .pdf-table-compact td {
-        border: 1px solid #dee2e6;
+        border: 1px solid #444444; /* Slightly bold defined border */
         padding: 7px 8px;
         font-size: 11px;
     }
     .pdf-table-compact th {
-        background-color: #f1f3f5;
+        background-color: #f0f0f0;
         font-weight: bold;
         text-align: center;
     }
@@ -92,7 +101,7 @@
     <p>Monthly Report — {{ $data['month_name'] ?? 'August' }} {{ $data['year'] ?? '2026' }}</p>
 </div>
 
-<!-- Summary Grid (Total Payments replaces Total Fixed) -->
+<!-- Summary Grid -->
 <table class="totals-table">
     <tr>
         <td><strong>{{ __('Members') }}:</strong> {{ count($members) }}</td>
@@ -111,7 +120,7 @@
     </tr>
 </table>
 
-<!-- Member Statement Table (Fixed & Bill columns removed, Next month advance added) -->
+<!-- Member Statement Table -->
 @if (! empty($members))
     <table class="pdf-table-compact">
         <thead>
