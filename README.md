@@ -12,7 +12,7 @@
 
 A web-based mess management system built for Bangladesh messes — bachelor hostels, student hostels, and shared accommodations. The mess manager enters daily meals and bazar expenses on mobile; members log in to view their bills, request meal-offs, and check their payment history. The system automates the Bangladesh-specific monthly close: meal rate derived from bazar only, fixed expenses split equally, advance balance carry-forward, and immutable monthly snapshots.
 
-**Developed by [Devsroom](https://devsroom.com)** · Developer portfolio: [wpmhs.com](https://wpmhs.com)
+**Developed by [Devsroom](https://devsroom.com)**
 
 </div>
 
