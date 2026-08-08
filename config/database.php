@@ -39,7 +39,7 @@ return [
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
             'dump' => [
-                'dump_binary_path' => '/root/.nix-profile/bin',
+                'dump_binary_path' => '/usr/bin',
             ],
             'busy_timeout' => null,
             'journal_mode' => null,
