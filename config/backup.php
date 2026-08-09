@@ -30,7 +30,7 @@ return [
                  * The MySQL dump is added by spatie regardless of this list.
                  */
                 'include' => [
-                    storage_path('db/database.sqlite'),
+                    storage_path('app'),
                 ],
 
                 /*

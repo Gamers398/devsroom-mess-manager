@@ -1,8 +1,9 @@
 FROM php:8.4-cli
 
-# Install system dependencies and required PHP extensions
+# Install system dependencies, PostgreSQL client (pg_dump), and PHP extensions
 RUN apt-get update && apt-get install -y \
     libpq-dev \
+    postgresql-client \
     libzip-dev \
     libpng-dev \
     libjpeg-dev \
@@ -22,7 +23,7 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . .
 
-# Install PHP dependencies (including Telescope provider support)
+# Install PHP dependencies
 RUN composer install --optimize-autoloader
 
 # Run database migrations and start server on Render's dynamic port
