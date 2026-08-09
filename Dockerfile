@@ -26,8 +26,17 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --optimize-autoloader
 
-# Run database migrations and start server on Render's dynamic port
-CMD php artisan config:cache && \
+# Ensure required storage directories exist and have proper permissions
+RUN mkdir -p storage/app/public \
+    storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    bootstrap/cache \
+    && chmod -R 777 storage bootstrap/cache
+
+# Run storage linking, cache clear, migrations, and start server
+CMD php artisan storage:link --force && \
+    php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache && \
     php artisan migrate --force && \
