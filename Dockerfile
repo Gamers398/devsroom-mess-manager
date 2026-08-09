@@ -1,6 +1,6 @@
 FROM php:8.4-cli
 
-# Install system dependencies and required PHP extensions (pdo_pgsql, zip, bcmath, gd)
+# Install system dependencies and required PHP extensions
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     libzip-dev \
@@ -22,8 +22,8 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Install PHP dependencies (including Telescope provider support)
+RUN composer install --optimize-autoloader
 
 # Run database migrations and start server on Render's dynamic port
 CMD php artisan config:cache && \
