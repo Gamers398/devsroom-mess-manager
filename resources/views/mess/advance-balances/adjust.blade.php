@@ -2,6 +2,9 @@
 @section('content')
     @php
         $net = $member->advanceBalance?->netBalance() ?? 0;
+        $oldAmount = old('amount');
+        $initialDir = $oldAmount && $oldAmount < 0 ? 'charge' : 'credit';
+        $initialMag = $oldAmount ? abs($oldAmount) : '';
     @endphp
     <header class="mb-6">
         <h1 class="text-2xl font-semibold leading-tight text-slate-900">{{ __('Adjust balance') }}</h1>
@@ -19,22 +22,35 @@
     </header>
 
     <form method="POST" action="{{ route('mess.advance-balances.storeAdjust', $member) }}"
+          id="adjustBalanceForm"
           class="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
-          x-data="{ dir: 'credit', mag: '' }">
+          x-data="{
+              dir: '{{ $initialDir }}',
+              mag: '{{ $initialMag }}',
+              syncAmount() {
+                  let val = parseFloat(this.mag);
+                  if (isNaN(val) || val <= 0) {
+                      $refs.amountInput.value = '';
+                  } else {
+                      $refs.amountInput.value = this.dir === 'credit' ? val : -val;
+                  }
+              }
+          }"
+          @submit="syncAmount()">
         @csrf
-        {{-- The backend expects a signed `amount` (+credit / −charge). Build it from the
-             chosen direction + a positive magnitude so the admin never has to type a sign. --}}
-        <input type="hidden" name="amount" :value="dir === 'credit' ? (mag || 0) : -(mag || 0)" />
+
+        {{-- Hidden signed amount sent directly to backend --}}
+        <input type="hidden" name="amount" x-ref="amountInput" id="amount" value="{{ $oldAmount ?? '' }}" />
 
         <div>
             <span class="block text-sm font-medium text-slate-700">{{ __('What are you recording?') }}</span>
             <div class="mt-1 inline-flex rounded-md border border-slate-300 bg-white p-0.5 text-sm">
                 <label class="cursor-pointer">
-                    <input type="radio" name="dir" value="credit" x-model="dir" class="peer sr-only" />
+                    <input type="radio" name="dir" value="credit" x-model="dir" @change="syncAmount()" class="peer sr-only" />
                     <span class="inline-flex min-h-[44px] items-center rounded px-4 peer-checked:bg-emerald-600 peer-checked:text-white">{{ __('Add credit') }}</span>
                 </label>
                 <label class="cursor-pointer">
-                    <input type="radio" name="dir" value="charge" x-model="dir" class="peer sr-only" />
+                    <input type="radio" name="dir" value="charge" x-model="dir" @change="syncAmount()" class="peer sr-only" />
                     <span class="inline-flex min-h-[44px] items-center rounded px-4 peer-checked:bg-rose-600 peer-checked:text-white">{{ __('Add charge (they owe)') }}</span>
                 </label>
             </div>
@@ -44,8 +60,9 @@
 
         <div>
             <label for="mag" class="block text-sm font-medium text-slate-700">{{ __('Amount (BDT)') }}</label>
-            <input type="number" id="mag" x-model.number="mag" min="0.01" step="0.01" required
-                class="input mt-1" placeholder="0.00" />
+            <input type="number" id="mag" x-model="mag" @input="syncAmount()" min="0.01" step="0.01" required
+                class="input mt-1" placeholder="0.00" value="{{ $initialMag }}" />
+            @error('amount') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
         </div>
 
         <div>
@@ -55,11 +72,20 @@
             @error('reason') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
         </div>
 
-        @error('amount') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
-
         <div class="flex justify-end gap-2">
             <a href="{{ route('mess.advance-balances.index') }}" class="btn btn-secondary">{{ __('Cancel') }}</a>
             <button type="submit" class="btn btn-primary">{{ __('Save') }}</button>
         </div>
     </form>
+
+    <script>
+        // Guaranteed fallback to set signed amount right upon clicking Save
+        document.getElementById('adjustBalanceForm').addEventListener('submit', function() {
+            const mag = parseFloat(document.getElementById('mag').value);
+            const dir = document.querySelector('input[name="dir"]:checked')?.value || 'credit';
+            if (!isNaN(mag) && mag > 0) {
+                document.getElementById('amount').value = (dir === 'credit' ? mag : -mag);
+            }
+        });
+    </script>
 @endsection
