@@ -130,26 +130,37 @@
                 <th class="num">{{ __('Meal cost') }}</th>
                 <th class="num">{{ __('Paid') }}</th>
                 <th class="num">{{ __('Due') }}</th>
-                <th class="num">{{ __('Next month advance') }}</th>
+                <th class="num">{{ __('Advance') }}</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($members as $row)
                 @php
-                    $mealCost = (float) ($row['meal_cost'] ?? 0);
+                    $mealCost = (float) ($row['meal_cost'] ?? $row['bill'] ?? 0);
                     $paid = (float) ($row['bill_payments'] ?? $row['paid'] ?? 0);
+                    $broughtForward = (float) ($row['brought_forward'] ?? 0);
                     
-                    // Calculations
-                    $due = max(0, $mealCost - $paid);
-                    $advance = max(0, $paid - $mealCost);
+                    // Determine Closing (Net) Balance: Positive = Credit, Negative = Owes
+                    if (isset($row['closing_net']) && is_numeric($row['closing_net'])) {
+                        $closingNet = (float) $row['closing_net'];
+                    } elseif (isset($row['closing']) && is_numeric($row['closing'])) {
+                        $closingNet = (float) $row['closing'];
+                    } else {
+                        $closingNet = ($paid - $mealCost) + $broughtForward;
+                    }
+
+                    // If net closing is negative -> owes money -> Due
+                    // If net closing is positive -> has credit -> Advance
+                    $due = $closingNet < 0 ? abs($closingNet) : 0;
+                    $advance = $closingNet > 0 ? $closingNet : 0;
                 @endphp
                 <tr>
                     <td>{{ $row['name'] }}</td>
-                    <td class="num">{{ number_format((float) $row['meals'], 1) }}</td>
+                    <td class="num">{{ number_format((float) ($row['meals'] ?? 0), 1) }}</td>
                     <td class="num">{{ $formatTk($mealCost) }}</td>
                     <td class="num">{{ $formatTk($paid) }}</td>
                     
-                    <!-- Due (Red if > 0) -->
+                    <!-- Due (Red if member owes) -->
                     <td class="num">
                         @if ($due > 0)
                             <span class="text-red">{{ $formatTk($due) }}</span>
@@ -158,7 +169,7 @@
                         @endif
                     </td>
 
-                    <!-- Next month advance (Green if > 0) -->
+                    <!-- Advance (Green if member has credit) -->
                     <td class="num">
                         @if ($advance > 0)
                             <span class="text-green">{{ $formatTk($advance) }}</span>
