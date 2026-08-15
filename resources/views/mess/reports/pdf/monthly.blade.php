@@ -94,19 +94,24 @@
         font-weight: bold;
     }
 </style>
-<!-- PDF Clean Center Header -->
-<div style="text-align: center; margin-top: 5px; margin-bottom: 20px;">
-    <!-- Fixed 1:1 Aspect Ratio Box to prevent oval stretching in DomPDF -->
-    <div style="width: 85px; height: 85px; margin: 0 auto 12px auto;">
-        <img src="{{ public_path('images/crest.svg') }}" width="85" height="85" style="width: 85px; height: 85px;" />
-    </div>
-
-    <!-- Title & Date Spaced Cleanly Below Emblem -->
-    <div class="report-title-header" style="margin-top: 0; margin-bottom: 0;">
-        <h2 style="margin: 0 0 4px 0; font-size: 18px; color: #0B2038; letter-spacing: 1px;">OFFICERS' MESS</h2>
-        <p style="margin: 0; font-size: 12px; color: #555;">Monthly Report — {{ $data['month_name'] ?? 'August' }} {{ $data['year'] ?? '2026' }}</p>
-    </div>
-</div>
+<!-- Upper Middle Header (Table-based layout to prevent DomPDF overlapping & stretching) -->
+<table style="width: 100%; border: none; border-collapse: collapse; margin-top: 5px; margin-bottom: 18px;">
+    <tr>
+        <td style="text-align: center; border: none; padding: 0;">
+            <img src="{{ public_path('images/crest.svg') }}" width="72" height="72" style="width: 72px; height: 72px; margin: 0 auto;" />
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: center; border: none; padding-top: 8px;">
+            <h2 style="margin: 0; font-size: 19px; font-weight: bold; color: #0B2038; letter-spacing: 1.2px; text-transform: uppercase;">
+                OFFICERS' MESS
+            </h2>
+            <p style="margin: 3px 0 0 0; font-size: 11.5px; color: #444;">
+                Monthly Report — {{ $data['month_name'] ?? 'August' }} {{ $data['year'] ?? '2026' }}
+            </p>
+        </td>
+    </tr>
+</table>
 
 <!-- Summary Grid -->
 <table class="totals-table">
