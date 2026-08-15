@@ -94,7 +94,9 @@
         font-weight: bold;
     }
 </style>
-
+<div style="text-align: center; margin-bottom: 8px;">
+    <img src="{{ public_path('images/crest.svg') }}" style="width: 80px; height: 80px;" />
+</div>
 <!-- Upper Middle Header -->
 <div class="report-title-header">
     <h2>Officer's Mess</h2>

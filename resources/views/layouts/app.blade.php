@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -14,13 +15,15 @@
 
     <div class="flex min-h-screen flex-col">
         <header class="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3">
                 <button type="button" class="btn btn-ghost md:hidden" data-sidebar-toggle aria-label="{{ __('Open menu') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
                     </svg>
                 </button>
-                <span class="text-base font-semibold text-slate-900">{{ config('app.name') }}</span>
+                <a href="{{ route('home') }}" class="flex items-center">
+                    <img src="{{ asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-9 w-auto" />
+                </a>
             </div>
             <div class="flex items-center gap-3">
                 <x-notification-bell />
