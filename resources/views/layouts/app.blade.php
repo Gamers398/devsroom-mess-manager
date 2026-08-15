@@ -22,7 +22,7 @@
                     </svg>
                 </button>
                 <a href="{{ route('home') }}" class="flex items-center">
-                    <img src="{{ asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-9 w-auto" />
+                    <img src="{{ asset('images/logo.svg') }}" alt="Officers' Mess" class="h-10 md:h-11 w-auto" />
                 </a>
             </div>
             <div class="flex items-center gap-3">
