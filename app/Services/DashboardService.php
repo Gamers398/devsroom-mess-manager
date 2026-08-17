@@ -368,21 +368,64 @@ class DashboardService
      *
      * @return list<array{id:int,name:string,net:float}>
      */
-    public function membersWithDues(int $messId): array
-    {
-        return Member::query()
-            ->where('mess_id', $messId)
-            ->where('status', MemberStatus::ACTIVE)
-            ->with('advanceBalance')
-            ->orderBy('name')
-            ->get()
-            ->map(fn (Member $m) => ['id' => $m->id, 'name' => $m->name, 'net' => $m->advanceBalance?->netBalance() ?? 0])
-            ->filter(fn (array $m) => $m['net'] < 0)
-            ->sortBy('net')
-            ->take(8)
-            ->values()
-            ->all();
+    public function membersWithDues(?int $messId = null): array
+{
+    $messId = $messId ?? Mess::activeId();
+    if (! $messId) {
+        return [];
     }
+
+    $now = \Carbon\Carbon::now();
+    $year = $now->year;
+    $month = $now->month;
+
+    // Fetch members of the mess
+    $members = \App\Models\Member::query()
+        ->where('mess_id', $messId)
+        ->where('is_active', true)
+        ->get();
+
+    $dueMembers = [];
+
+    foreach ($members as $member) {
+        // 1. Opening balance from last month (Brought Forward: positive = credit, negative = owes)
+        $broughtForward = (float) ($member->opening_balance ?? 0);
+
+        // 2. Total payments made by member this month
+        $paid = (float) \App\Models\Payment::query()
+            ->where('member_id', $member->id)
+            ->whereYear('paid_at', $year)
+            ->whereMonth('paid_at', $month)
+            ->sum('amount');
+
+        // 3. Total meal cost for this month
+        $mealCount = (float) \App\Models\Meal::query()
+            ->where('member_id', $member->id)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->sum('count');
+
+        $currentMealRate = (float) $this->currentMealRate($messId);
+        $mealCost = $mealCount * $currentMealRate;
+
+        // 4. Live Closing Net = Brought Forward + Paid - Meal Cost
+        $netBalance = $broughtForward + $paid - $mealCost;
+
+        // If netBalance < 0, the member currently owes money
+        if ($netBalance < -0.01) {
+            $dueMembers[] = [
+                'id'   => $member->id,
+                'name' => $member->name,
+                'net'  => abs($netBalance), // Displays exact remaining due amount
+            ];
+        }
+    }
+
+    // Sort by largest due amount first
+    usort($dueMembers, fn ($a, $b) => $b['net'] <=> $a['net']);
+
+    return $dueMembers;
+}
 
     /**
      * Bazar vs Collection (this month): grocery+fixed spend vs money collected.
