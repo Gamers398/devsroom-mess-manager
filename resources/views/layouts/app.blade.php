@@ -8,14 +8,12 @@
 
     <title>{{ (isset($title) && $title && $title !== config('app.name')) ? $title . ' — ' . config('app.name') : config('app.name') }}</title>
 
-    <!-- Google Font: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <!-- Immediate Theme Application (Zero Flicker) -->
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -36,18 +34,18 @@
             top: 4rem !important;
             bottom: 0 !important;
             left: 0 !important;
-            width: 16rem !important;
+            width: 16.5rem !important;
             z-index: 45 !important;
             transform: translateX(-100%) !important;
             transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease !important;
-            box-shadow: 4px 0 25px rgba(0, 0, 0, 0.2) !important;
+            box-shadow: 4px 0 25px rgba(0, 0, 0, 0.25) !important;
         }
 
         #app-sidebar.sidebar-open {
             transform: translateX(0) !important;
         }
 
-        /* Stat Card Adaptive Icon Badges (Light vs Dark) */
+        /* Stat Icon Badges */
         .stat-icon-badge {
             display: flex;
             align-items: center;
@@ -57,7 +55,6 @@
             border-radius: 0.75rem;
             transition: all 0.2s ease;
         }
-
         .badge-slate { background-color: #f1f5f9; color: #475569; }
         .badge-sky { background-color: #e0f2fe; color: #0284c7; }
         .badge-indigo { background-color: #e0e7ff; color: #4f46e5; }
@@ -65,14 +62,7 @@
         .badge-amber { background-color: #fef3c7; color: #d97706; }
         .badge-rose { background-color: #ffe4e6; color: #e11d48; }
 
-        html.dark .badge-slate { background-color: #1e293b !important; color: #94a3b8 !important; }
-        html.dark .badge-sky { background-color: rgba(14, 165, 233, 0.18) !important; color: #38bdf8 !important; }
-        html.dark .badge-indigo { background-color: rgba(99, 102, 241, 0.18) !important; color: #818cf8 !important; }
-        html.dark .badge-emerald { background-color: rgba(16, 185, 129, 0.18) !important; color: #34d399 !important; }
-        html.dark .badge-amber { background-color: rgba(245, 158, 11, 0.18) !important; color: #fbbf24 !important; }
-        html.dark .badge-rose { background-color: rgba(244, 63, 94, 0.18) !important; color: #fb7185 !important; }
-
-        /* Global Dark Mode Polish */
+        /* Global Dark Mode Overrides (Eliminates White Headers and Distortions) */
         html.dark body {
             background-color: #0b1120 !important;
             color: #f1f5f9 !important;
@@ -82,20 +72,50 @@
             filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
         }
 
+        /* Surfaces, Cards & Sidebar */
         html.dark header,
         html.dark aside,
         html.dark #app-sidebar,
         html.dark .bg-white {
             background-color: #111827 !important;
             border-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
+
+        /* Table Containers, Headers and Strips */
+        html.dark table,
+        html.dark thead,
+        html.dark thead tr,
+        html.dark thead th,
+        html.dark th,
+        html.dark .bg-slate-50,
+        html.dark .bg-slate-100,
+        html.dark .bg-gray-50,
+        html.dark .bg-gray-100 {
+            background-color: #162032 !important;
+            color: #94a3b8 !important;
+            border-color: #1e293b !important;
+        }
+
+        html.dark thead th {
+            color: #94a3b8 !important;
+            background-color: #0e1726 !important;
+        }
+
+        html.dark tbody tr {
+            background-color: #111827 !important;
+            border-color: #1e293b !important;
+        }
+
+        html.dark tbody tr:hover {
+            background-color: #162238 !important;
         }
 
         html.dark .border-slate-200,
         html.dark .border-slate-100,
         html.dark .border-slate-300,
         html.dark tr,
-        html.dark td,
-        html.dark th {
+        html.dark td {
             border-color: #1e293b !important;
         }
 
@@ -115,6 +135,14 @@
             color: #94a3b8 !important;
         }
 
+        /* Badges in Dark Mode */
+        html.dark .badge-slate { background-color: #1e293b !important; color: #94a3b8 !important; }
+        html.dark .badge-sky { background-color: rgba(14, 165, 233, 0.18) !important; color: #38bdf8 !important; }
+        html.dark .badge-indigo { background-color: rgba(99, 102, 241, 0.18) !important; color: #818cf8 !important; }
+        html.dark .badge-emerald { background-color: rgba(16, 185, 129, 0.18) !important; color: #34d399 !important; }
+        html.dark .badge-amber { background-color: rgba(245, 158, 11, 0.18) !important; color: #fbbf24 !important; }
+        html.dark .badge-rose { background-color: rgba(244, 63, 94, 0.18) !important; color: #fb7185 !important; }
+
         html.dark input,
         html.dark select,
         html.dark textarea {
@@ -129,6 +157,9 @@
         {{ __('Skip to main content') }}
     </a>
 
+    <!-- Left Edge Hover Trigger Zone (Desktop) -->
+    <div id="desktop-edge-sensor" class="fixed bottom-0 left-0 top-16 z-40 hidden w-6 md:block"></div>
+
     <div class="flex min-h-screen flex-col">
         <!-- Always Sticky Navbar (sticky top-0 z-50) -->
         <header class="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md md:px-6 dark:border-slate-800 dark:bg-[#111827]/95">
@@ -137,7 +168,7 @@
                         id="global-sidebar-toggle"
                         class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white" 
                         aria-label="{{ __('Toggle navigation sidebar') }}"
-                        title="Toggle Navigation Menu">
+                        title="Toggle Sidebar">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
                     </svg>
@@ -181,16 +212,13 @@
         </header>
 
         <div class="flex flex-1">
-            <!-- Sliding Sidebar Component -->
             <aside id="app-sidebar" 
-                   class="overflow-y-auto border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-[#111827]">
+                   class="overflow-y-auto border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-[#111827]" data-sidebar>
                 <x-sidebar />
             </aside>
 
-            <!-- Mobile Backdrop -->
             <div id="sidebar-backdrop" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-xs"></div>
 
-            <!-- Main Content Area -->
             <main id="main-content" class="flex-1 px-4 py-6 md:px-8 md:py-8">
                 <div class="mx-auto w-full max-w-384">
                     @if (session('success'))
@@ -206,7 +234,7 @@
         </div>
     </div>
 
-    <!-- Theme & Reliable Hover/Toggle Sidebar Controller -->
+    <!-- Theme & Reliable Event-Based Sidebar Handler -->
     <script>
         function updateThemeIcons() {
             const isDark = document.documentElement.classList.contains('dark');
@@ -240,34 +268,46 @@
             const sidebar = document.getElementById('app-sidebar');
             const toggleBtn = document.getElementById('global-sidebar-toggle');
             const backdrop = document.getElementById('sidebar-backdrop');
-            let sidebarLocked = false;
+            const sensor = document.getElementById('desktop-edge-sensor');
+            let isPinned = false;
+            let leaveTimer = null;
 
-            // 1. Desktop Edge Hover: Opens when cursor moves <= 25px from left; closes when > 270px away
-            document.addEventListener('mousemove', function (e) {
-                if (window.innerWidth >= 768) {
-                    if (sidebarLocked) return;
-                    if (e.clientX <= 25 && e.clientY > 64) {
+            // Desktop Left Edge Hover
+            if (sensor && sidebar) {
+                sensor.addEventListener('mouseenter', () => {
+                    if (window.innerWidth >= 768 && !isPinned) {
+                        clearTimeout(leaveTimer);
                         sidebar.classList.add('sidebar-open');
-                    } else if (e.clientX > 270) {
-                        sidebar.classList.remove('sidebar-open');
                     }
-                }
-            });
+                });
 
-            // 2. Button Click Toggle
+                sidebar.addEventListener('mouseenter', () => {
+                    if (window.innerWidth >= 768 && !isPinned) {
+                        clearTimeout(leaveTimer);
+                    }
+                });
+
+                sidebar.addEventListener('mouseleave', () => {
+                    if (window.innerWidth >= 768 && !isPinned) {
+                        leaveTimer = setTimeout(() => {
+                            sidebar.classList.remove('sidebar-open');
+                        }, 300);
+                    }
+                });
+            }
+
+            // Button Toggle
             if (toggleBtn && sidebar) {
                 toggleBtn.addEventListener('click', function (e) {
                     e.stopPropagation();
                     if (window.innerWidth >= 768) {
-                        // Desktop: Toggle Pin Lock
-                        sidebarLocked = !sidebarLocked;
-                        if (sidebarLocked) {
+                        isPinned = !isPinned;
+                        if (isPinned) {
                             sidebar.classList.add('sidebar-open');
                         } else {
                             sidebar.classList.remove('sidebar-open');
                         }
                     } else {
-                        // Mobile: Toggle Drawer
                         const isOpen = sidebar.classList.contains('sidebar-open');
                         if (isOpen) {
                             sidebar.classList.remove('sidebar-open');
@@ -280,7 +320,6 @@
                 });
             }
 
-            // 3. Mobile Backdrop Close
             if (backdrop) {
                 backdrop.addEventListener('click', function () {
                     sidebar.classList.remove('sidebar-open');
