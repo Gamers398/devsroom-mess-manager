@@ -12,7 +12,7 @@
             ],
         ],
         [
-            'label' => __('Mess'),
+            'label' => __('Mess Operations'),
             'items' => [
                 ['route' => 'mess.members.index', 'match' => 'mess.members.*', 'label' => __('Members'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>'],
                 ['route' => 'mess.meals.index', 'match' => 'mess.meals.*', 'label' => __('Daily meals'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h18v18H3V3zm9 4v10m-5-7h10"/></svg>'],
@@ -25,7 +25,7 @@
             'label' => __('Finance'),
             'items' => [
                 ['route' => 'mess.expenses.index', 'match' => 'mess.expenses.*', 'label' => __('Expenses'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h15a2.25 2.25 0 0 1 2.25 2.25H2.25V8.25Zm0 3.75h15a2.25 2.25 0 0 1 2.25 2.25H2.25V12Zm0 3.75h15a2.25 2.25 0 0 1 2.25 2.25H2.25v-2.25Z"/></svg>'],
-                ['route' => 'mess.categories.index', 'match' => 'mess.categories.*', 'label' => __('Categories'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z"/></svg>'],
+                ['route' => 'mess.categories.index', 'match' => 'mess.categories.*', 'label' => __('Categories'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z"/></svg>'],
                 ['route' => 'mess.payments.index', 'match' => 'mess.payments.*', 'label' => __('Payments'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-4.5 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"/></svg>'],
                 ['route' => 'mess.advance-balances.index', 'match' => 'mess.advance-balances.*', 'label' => __('Member balances'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h15a2.25 2.25 0 0 1 2.25 2.25H2.25V8.25ZM2.25 12h15a2.25 2.25 0 0 1 2.25 2.25H2.25V12Zm0 3.75h15a2.25 2.25 0 0 1 2.25 2.25H2.25v-2.25Z"/></svg>'],
                 ['route' => 'mess.settlements.index', 'match' => 'mess.settlements.*', 'label' => __('Pending settlements'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>'],
@@ -110,7 +110,7 @@
             @if ($items->isNotEmpty())
                 <div>
                     @if (! empty($section['label']))
-                        <div class="px-3 pb-1 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                        <div class="px-3 pb-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
                             {{ $section['label'] }}
                         </div>
                     @endif
@@ -121,9 +121,9 @@
                                 $active = request()->routeIs($item['match']);
                             @endphp
                             <a href="{{ $url }}" 
-                               class="group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-150 min-h-[40px] {{ $active ? 'bg-emerald-600 text-white shadow-xs dark:bg-emerald-600' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/80 dark:hover:text-white' }}" 
+                               class="group flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-bold transition-all duration-150 min-h-[38px] {{ $active ? 'bg-emerald-600/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/30' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#1b2742] dark:hover:text-slate-200' }}" 
                                @if ($active) aria-current="page" @endif>
-                                <div class="flex h-7 w-7 items-center justify-center rounded-lg transition-colors {{ $active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-800 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-slate-700 dark:group-hover:text-slate-200' }}">
+                                <div class="flex h-6 w-6 items-center justify-center rounded-lg transition-colors {{ $active ? 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-slate-900 shadow-xs' : 'text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-300' }}">
                                     {!! $item['icon'] !!}
                                 </div>
                                 <span class="truncate">{{ $item['label'] }}</span>
@@ -135,19 +135,19 @@
         @endforeach
 
         @if (empty($sections))
-            <p class="px-3 py-4 text-xs text-slate-400">{{ __('No navigation available for your account.') }}</p>
+            <p class="px-3 py-4 text-xs text-slate-400">{{ __('No navigation available.') }}</p>
         @endif
     </nav>
 
-    <!-- Bottom Role Badge -->
-    <div class="mt-4 border-t border-slate-200/80 pt-3 dark:border-slate-800">
-        <div class="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2 dark:bg-slate-800/60">
-            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-xs font-black text-white shadow-xs">
+    <!-- Role Card at Bottom -->
+    <div class="mt-4 border-t border-slate-200 pt-3 dark:border-[#1e2c47]">
+        <div class="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2 dark:bg-[#0e1726]">
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-xs font-black text-white">
                 {{ substr(auth()->user()?->name ?? 'A', 0, 1) }}
             </div>
             <div class="flex-1 overflow-hidden">
-                <p class="truncate text-xs font-bold text-slate-900 dark:text-white">{{ auth()->user()?->name }}</p>
-                <p class="truncate text-[10px] font-medium text-slate-400">{{ $isSuperAdmin ? 'Super Admin' : ($isManager ? 'Mess Manager' : 'Mess Member') }}</p>
+                <p class="truncate text-xs font-bold text-slate-800 dark:text-slate-200">{{ auth()->user()?->name }}</p>
+                <p class="truncate text-[10px] text-slate-400">{{ $isSuperAdmin ? 'Super Admin' : ($isManager ? 'Manager' : 'Member') }}</p>
             </div>
         </div>
     </div>

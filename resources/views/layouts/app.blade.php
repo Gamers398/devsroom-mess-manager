@@ -7,14 +7,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? config('app.name') }} — {{ config('app.name') }}</title>
 
-    <!-- Google Font -->
+    <!-- Google Font: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <!-- Immediate Theme Application (No Flash) -->
+    <!-- Immediate Theme Application (Prevents White Flash) -->
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -23,99 +23,104 @@
         }
     </script>
 
-    <!-- Fail-safe Dark Theme & Aesthetic CSS Overrides -->
     <style>
         body {
             font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+            letter-spacing: -0.01em;
         }
-        
-        /* Universal Dark Theme Engine */
-        html.dark {
-            color-scheme: dark;
-        }
+
+        /* Dark Mode Global Styles */
         html.dark body {
-            background-color: #0b1120 !important;
+            background-color: #0c1322 !important;
             color: #f1f5f9 !important;
         }
+        
+        /* Turn Navbar Brand Logo Crisp White/Gold in Dark Mode */
+        html.dark header a img {
+            filter: brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+        }
+
+        /* Consistent Dark Surfaces */
         html.dark header,
         html.dark aside,
         html.dark #app-sidebar,
         html.dark .bg-white {
-            background-color: #111827 !important;
-            border-color: #1f2937 !important;
-            color: #f9fafb !important;
+            background-color: #141e33 !important;
+            border-color: #1e2c47 !important;
         }
+
         html.dark .border-slate-200,
         html.dark .border-slate-100,
         html.dark .border-slate-300 {
-            border-color: #1f2937 !important;
+            border-color: #1e2c47 !important;
         }
+
+        html.dark .divide-slate-100 > * + * {
+            border-color: #1e2c47 !important;
+        }
+
         html.dark .text-slate-900,
-        html.dark .text-slate-800,
-        html.dark .text-slate-700 {
-            color: #f9fafb !important;
+        html.dark .text-slate-800 {
+            color: #f8fafc !important;
         }
+
         html.dark .text-slate-600,
-        html.dark .text-slate-500,
-        html.dark .text-slate-400 {
-            color: #9ca3af !important;
+        html.dark .text-slate-500 {
+            color: #94a3b8 !important;
         }
-        html.dark .bg-slate-50,
-        html.dark .bg-slate-100 {
-            background-color: #1f2937 !important;
-        }
+
         html.dark input,
         html.dark select,
         html.dark textarea {
-            background-color: #0f172a !important;
-            border-color: #374151 !important;
-            color: #f9fafb !important;
+            background-color: #0e1726 !important;
+            border-color: #243552 !important;
+            color: #f8fafc !important;
         }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900 antialiased dark:bg-[#0b1120] dark:text-slate-100">
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased dark:bg-[#0c1322] dark:text-slate-100">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-emerald-600 focus:px-3 focus:py-2 focus:text-white">
         {{ __('Skip to main content') }}
     </a>
 
     <div class="flex min-h-screen flex-col">
         <!-- Top Navbar -->
-        <header class="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6 dark:border-slate-800 dark:bg-[#111827]">
+        <header class="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6 dark:border-[#1e2c47] dark:bg-[#141e33]">
             <div class="flex items-center gap-3">
-                <button type="button" class="btn btn-ghost md:hidden" data-sidebar-toggle aria-label="{{ __('Open menu') }}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5" aria-hidden="true">
+                <button type="button" class="btn btn-ghost p-1.5 md:hidden text-slate-600 dark:text-slate-300" data-sidebar-toggle aria-label="{{ __('Open menu') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
                     </svg>
                 </button>
-                <a href="{{ route('home') }}" class="flex items-center">
-                    <img src="{{ asset('images/logo.svg') }}" alt="Officers' Mess" class="h-9 w-auto" />
+                <a href="{{ route('home') }}" class="flex items-center transition-opacity hover:opacity-90">
+                    <img src="{{ asset('images/logo.svg') }}" alt="Officers' Mess" class="h-10 w-auto" />
                 </a>
             </div>
 
-            <div class="flex items-center gap-2 sm:gap-3">
+            <div class="flex items-center gap-3">
                 <!-- Theme Toggle Button -->
                 <button type="button" 
                         onclick="toggleTheme()" 
-                        class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-amber-400 dark:hover:bg-slate-700" 
-                        aria-label="Toggle dark mode">
-                    <!-- Sun Icon (visible in dark mode) -->
+                        class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900 dark:border-[#1e2c47] dark:bg-[#0e1726] dark:text-amber-400 dark:hover:bg-[#1a2942]" 
+                        title="Toggle Light/Dark Theme">
                     <svg id="theme-icon-sun" class="hidden h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
-                    <!-- Moon Icon (visible in light mode) -->
-                    <svg id="theme-icon-moon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg id="theme-icon-moon" class="hidden h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                     </svg>
                 </button>
 
                 <x-notification-bell />
 
-                <span class="hidden text-sm font-semibold text-slate-700 sm:inline dark:text-slate-300">{{ auth()->user()?->name }}</span>
+                <div class="hidden h-4 w-px bg-slate-200 sm:block dark:bg-slate-700"></div>
+
+                <span class="hidden text-xs font-bold text-slate-700 sm:inline dark:text-slate-200">{{ auth()->user()?->name }}</span>
 
                 <form method="POST" action="{{ url('/logout') }}">
                     @csrf
-                    <button type="submit" class="flex items-center gap-1.5 rounded-xl border border-transparent px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-rose-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-rose-400" aria-label="{{ __('Log out') }}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true">
+                    <button type="submit" class="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-300">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/>
                         </svg>
                         <span class="hidden sm:inline">{{ __('Log out') }}</span>
@@ -125,21 +130,21 @@
         </header>
 
         <div class="flex flex-1">
-            <!-- Sidebar -->
-            <aside id="app-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full overflow-y-auto border-r border-slate-200 bg-white transition-transform md:static md:translate-x-0 dark:border-slate-800 dark:bg-[#111827]" data-sidebar>
+            <!-- Sleek Left Sidebar -->
+            <aside id="app-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full overflow-y-auto border-r border-slate-200 bg-white transition-transform md:static md:translate-x-0 dark:border-[#1e2c47] dark:bg-[#141e33]" data-sidebar>
                 <x-sidebar />
             </aside>
 
-            <div data-sidebar-backdrop class="fixed inset-0 z-30 hidden bg-slate-900/50 backdrop-blur-xs md:hidden"></div>
+            <div data-sidebar-backdrop class="fixed inset-0 z-30 hidden bg-slate-900/60 backdrop-blur-xs md:hidden"></div>
 
-            <!-- Content Area -->
+            <!-- Page Container -->
             <main id="main-content" class="flex-1 px-4 py-6 md:px-8 md:py-8">
                 <div class="mx-auto w-full max-w-384">
                     @if (session('success'))
-                        <div role="alert" class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">{{ session('success') }}</div>
+                        <div role="alert" class="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm font-semibold text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300">{{ session('success') }}</div>
                     @endif
                     @if (session('error'))
-                        <div role="alert" class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800 dark:border-red-900 dark:bg-red-950/60 dark:text-red-300">{{ session('error') }}</div>
+                        <div role="alert" class="mb-5 rounded-2xl border border-rose-200 bg-rose-50/90 px-4 py-3 text-sm font-semibold text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300">{{ session('error') }}</div>
                     @endif
 
                     @yield('content')
@@ -148,7 +153,7 @@
         </div>
     </div>
 
-    <!-- Theme & UI Scripts -->
+    <!-- Theme & Mobile Sidebar Logic -->
     <script>
         function updateThemeIcons() {
             const isDark = document.documentElement.classList.contains('dark');
