@@ -7,8 +7,21 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? config('app.name') }} — {{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important; }
+</style>
+<script>
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+</script>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-emerald-600 focus:px-3 focus:py-2 focus:text-white">
         {{ __('Skip to main content') }}
     </a>
@@ -26,6 +39,20 @@
                 </a>
             </div>
             <div class="flex items-center gap-3">
+                <!-- Dark / Light Mode Toggle Button -->
+<button type="button" 
+        id="theme-toggle" 
+        class="btn btn-ghost p-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" 
+        aria-label="Toggle theme">
+    <!-- Sun Icon (shown in dark mode) -->
+    <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+    <!-- Moon Icon (shown in light mode) -->
+    <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+</button>
                 <x-notification-bell />
                 <span class="hidden text-sm text-slate-600 sm:inline">{{ auth()->user()?->name }}</span>
                 <form method="POST" action="{{ url('/logout') }}">
@@ -77,5 +104,32 @@
             });
         </script>
     @endonce
+    <script>
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const darkIcon = document.getElementById('theme-toggle-dark-icon');
+    const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+    function syncIcons() {
+        if (document.documentElement.classList.contains('dark')) {
+            lightIcon.classList.remove('hidden');
+            darkIcon.classList.add('hidden');
+        } else {
+            lightIcon.classList.add('hidden');
+            darkIcon.classList.remove('hidden');
+        }
+    }
+    syncIcons();
+
+    themeToggleBtn.addEventListener('click', function () {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        }
+        syncIcons();
+    });
+</script>
 </body>
 </html>
