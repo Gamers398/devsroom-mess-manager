@@ -370,61 +370,74 @@ class DashboardService
      */
     public function membersWithDues(?int $messId = null): array
 {
-    $messId = $messId ?? Mess::activeId();
+    $messId = $messId ?? \App\Models\Mess::activeId();
     if (! $messId) {
         return [];
     }
 
-    $now = \Carbon\Carbon::now();
-    $year = $now->year;
-    $month = $now->month;
+    try {
+        $now = \Carbon\Carbon::now();
+        $year = $now->year;
+        $month = $now->month;
 
-    // Fetch members of the mess
-    $members = \App\Models\Member::query()
-        ->where('mess_id', $messId)
-        ->where('is_active', true)
-        ->get();
-
-    $dueMembers = [];
-
-    foreach ($members as $member) {
-        // 1. Opening balance from last month (Brought Forward: positive = credit, negative = owes)
-        $broughtForward = (float) ($member->opening_balance ?? 0);
-
-        // 2. Total payments made by member this month
-        $paid = (float) \App\Models\Payment::query()
-            ->where('member_id', $member->id)
-            ->whereYear('paid_at', $year)
-            ->whereMonth('paid_at', $month)
+        // Calculate current month's meal rate directly
+        $totalBazar = (float) \App\Models\Expense::query()
+            ->where('mess_id', $messId)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
             ->sum('amount');
 
-        // 3. Total meal cost for this month
-        $mealCount = (float) \App\Models\Meal::query()
-            ->where('member_id', $member->id)
+        $totalMeals = (float) \App\Models\Meal::query()
+            ->whereHas('member', fn ($q) => $q->where('mess_id', $messId))
             ->whereYear('date', $year)
             ->whereMonth('date', $month)
             ->sum('count');
 
-        $currentMealRate = (float) $this->currentMealRate($messId);
-        $mealCost = $mealCount * $currentMealRate;
+        $mealRate = $totalMeals > 0 ? ($totalBazar / $totalMeals) : 0.0;
 
-        // 4. Live Closing Net = Brought Forward + Paid - Meal Cost
-        $netBalance = $broughtForward + $paid - $mealCost;
+        // Fetch active members
+        $members = \App\Models\Member::query()
+            ->where('mess_id', $messId)
+            ->where('is_active', true)
+            ->get();
 
-        // If netBalance < 0, the member currently owes money
-        if ($netBalance < -0.01) {
-            $dueMembers[] = [
-                'id'   => $member->id,
-                'name' => $member->name,
-                'net'  => abs($netBalance), // Displays exact remaining due amount
-            ];
+        $dueMembers = [];
+
+        foreach ($members as $member) {
+            $broughtForward = (float) ($member->opening_balance ?? 0);
+
+            $paid = (float) \App\Models\Payment::query()
+                ->where('member_id', $member->id)
+                ->whereYear('paid_at', $year)
+                ->whereMonth('paid_at', $month)
+                ->sum('amount');
+
+            $memberMeals = (float) \App\Models\Meal::query()
+                ->where('member_id', $member->id)
+                ->whereYear('date', $year)
+                ->whereMonth('date', $month)
+                ->sum('count');
+
+            $mealCost = $memberMeals * $mealRate;
+            $netBalance = $broughtForward + $paid - $mealCost;
+
+            // Include only members who still have an outstanding negative balance (due)
+            if ($netBalance < -0.05) {
+                $dueMembers[] = [
+                    'id'   => $member->id,
+                    'name' => $member->name,
+                    'net'  => abs($netBalance),
+                ];
+            }
         }
+
+        usort($dueMembers, fn ($a, $b) => $b['net'] <=> $a['net']);
+
+        return $dueMembers;
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('membersWithDues error: ' . $e->getMessage());
+        return [];
     }
-
-    // Sort by largest due amount first
-    usort($dueMembers, fn ($a, $b) => $b['net'] <=> $a['net']);
-
-    return $dueMembers;
 }
 
     /**

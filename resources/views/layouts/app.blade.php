@@ -37,12 +37,27 @@
             width: 16.5rem !important;
             z-index: 45 !important;
             transform: translateX(-100%) !important;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease !important;
-            box-shadow: 4px 0 25px rgba(0, 0, 0, 0.25) !important;
+            transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s ease !important;
+            box-shadow: 4px 0 25px rgba(0, 0, 0, 0.3) !important;
         }
 
         #app-sidebar.sidebar-open {
             transform: translateX(0) !important;
+        }
+
+        /* Custom Sleek Scrollbars (Eliminates Chunky White Tracks) */
+        #app-sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        #app-sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #app-sidebar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        html.dark #app-sidebar::-webkit-scrollbar-thumb {
+            background: #1e293b;
         }
 
         /* Stat Icon Badges */
@@ -62,7 +77,7 @@
         .badge-amber { background-color: #fef3c7; color: #d97706; }
         .badge-rose { background-color: #ffe4e6; color: #e11d48; }
 
-        /* Global Dark Mode Overrides (Eliminates White Headers and Distortions) */
+        /* Global Dark Mode Overrides */
         html.dark body {
             background-color: #0b1120 !important;
             color: #f1f5f9 !important;
@@ -72,7 +87,6 @@
             filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
         }
 
-        /* Surfaces, Cards & Sidebar */
         html.dark header,
         html.dark aside,
         html.dark #app-sidebar,
@@ -82,7 +96,6 @@
             color: #f8fafc !important;
         }
 
-        /* Table Containers, Headers and Strips */
         html.dark table,
         html.dark thead,
         html.dark thead tr,
@@ -135,7 +148,6 @@
             color: #94a3b8 !important;
         }
 
-        /* Badges in Dark Mode */
         html.dark .badge-slate { background-color: #1e293b !important; color: #94a3b8 !important; }
         html.dark .badge-sky { background-color: rgba(14, 165, 233, 0.18) !important; color: #38bdf8 !important; }
         html.dark .badge-indigo { background-color: rgba(99, 102, 241, 0.18) !important; color: #818cf8 !important; }
@@ -157,7 +169,7 @@
         {{ __('Skip to main content') }}
     </a>
 
-    <!-- Left Edge Hover Trigger Zone (Desktop) -->
+    <!-- Left Edge Hover Sensor (Desktop) -->
     <div id="desktop-edge-sensor" class="fixed bottom-0 left-0 top-16 z-40 hidden w-6 md:block"></div>
 
     <div class="flex min-h-screen flex-col">
@@ -234,7 +246,7 @@
         </div>
     </div>
 
-    <!-- Theme & Reliable Event-Based Sidebar Handler -->
+    <!-- Theme & Reliable Click-Outside Sidebar Handler -->
     <script>
         function updateThemeIcons() {
             const isDark = document.documentElement.classList.contains('dark');
@@ -272,7 +284,7 @@
             let isPinned = false;
             let leaveTimer = null;
 
-            // Desktop Left Edge Hover
+            // 1. Desktop Edge Hover Open
             if (sensor && sidebar) {
                 sensor.addEventListener('mouseenter', () => {
                     if (window.innerWidth >= 768 && !isPinned) {
@@ -291,35 +303,38 @@
                     if (window.innerWidth >= 768 && !isPinned) {
                         leaveTimer = setTimeout(() => {
                             sidebar.classList.remove('sidebar-open');
-                        }, 300);
+                        }, 250);
                     }
                 });
             }
 
-            // Button Toggle
+            // 2. Toggle Button Click
             if (toggleBtn && sidebar) {
                 toggleBtn.addEventListener('click', function (e) {
                     e.stopPropagation();
                     if (window.innerWidth >= 768) {
                         isPinned = !isPinned;
-                        if (isPinned) {
-                            sidebar.classList.add('sidebar-open');
-                        } else {
-                            sidebar.classList.remove('sidebar-open');
-                        }
+                        sidebar.classList.toggle('sidebar-open', isPinned);
                     } else {
                         const isOpen = sidebar.classList.contains('sidebar-open');
-                        if (isOpen) {
-                            sidebar.classList.remove('sidebar-open');
-                            if (backdrop) backdrop.classList.add('hidden');
-                        } else {
-                            sidebar.classList.add('sidebar-open');
-                            if (backdrop) backdrop.classList.remove('hidden');
-                        }
+                        sidebar.classList.toggle('sidebar-open', !isOpen);
+                        if (backdrop) backdrop.classList.toggle('hidden', isOpen);
                     }
                 });
             }
 
+            // 3. Click-Outside to Auto Close (Desktop & Mobile)
+            document.addEventListener('click', function (e) {
+                if (sidebar && sidebar.classList.contains('sidebar-open')) {
+                    if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+                        sidebar.classList.remove('sidebar-open');
+                        isPinned = false;
+                        if (backdrop) backdrop.classList.add('hidden');
+                    }
+                }
+            });
+
+            // 4. Mobile Backdrop Tap
             if (backdrop) {
                 backdrop.addEventListener('click', function () {
                     sidebar.classList.remove('sidebar-open');
