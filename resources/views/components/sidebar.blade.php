@@ -1,15 +1,9 @@
 @php
     /**
-     * Role-based, grouped sidebar. Replaces the old flat link list that showed
-     * every manager link to everyone (members saw a wall of 403s).
-     *
-     * Two nav sets are declared, then filtered by the viewer's role:
-     *   - managers (admin / super-admin / manager) → the mess operations nav
-     *   - members (user / mess-member)            → the "My" self-service nav
-     * Super-admin additionally gets the System group (Tyro dashboard + backups).
+     * Role-based, grouped sidebar with modern styling & dark mode support.
      */
     $user = auth()->user();
-    $isManager = $user && $user->canManageMess();       // admin / super-admin / manager
+    $isManager = $user && $user->canManageMess();
     $isSuperAdmin = $user && $user->hasRole('super-admin');
     $isMember = $user && ! $isManager && $user->hasAnyRole(['user', 'mess-member']);
 
@@ -52,7 +46,6 @@
         ],
     ];
 
-    // Reports group — only render if the report routes are registered.
     if (\Illuminate\Support\Facades\Route::has('mess.reports.monthly')) {
         $managerSections[] = [
             'label' => __('Reports'),
@@ -102,41 +95,64 @@
         ],
     ];
 
-    // Pick the nav set for this viewer.
     $sections = $isMember ? $memberSections : ($isManager ? $managerSections : []);
     if ($isSuperAdmin) {
         $sections[] = $systemSection;
     }
 @endphp
 
-<nav class="flex h-full flex-col gap-1 p-4">
-    @foreach ($sections as $section)
-        @php
-            $items = collect($section['items'])->filter(function ($item) {
-                // Skip items whose route isn't registered (e.g. optional features off).
-                return ($item['route'] ?? null) === null
-                    ? true
-                    : \Illuminate\Support\Facades\Route::has($item['route']);
-            });
-        @endphp
-        @if ($items->isNotEmpty())
-            @if (! empty($section['label']))
-                <div class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $section['label'] }}</div>
+<div class="flex h-full flex-col justify-between p-3.5">
+    <nav class="space-y-5">
+        @foreach ($sections as $section)
+            @php
+                $items = collect($section['items'])->filter(function ($item) {
+                    return ($item['route'] ?? null) === null
+                        ? true
+                        : \Illuminate\Support\Facades\Route::has($item['route']);
+                });
+            @endphp
+            @if ($items->isNotEmpty())
+                <div>
+                    @if (! empty($section['label']))
+                        <div class="px-3 pb-1.5 text-[11px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                            {{ $section['label'] }}
+                        </div>
+                    @endif
+                    <div class="space-y-1">
+                        @foreach ($items as $item)
+                            @php
+                                $url = isset($item['url']) ? url($item['url']) : route($item['route']);
+                                $active = request()->routeIs($item['match']);
+                            @endphp
+                            <a href="{{ $url }}" 
+                               class="group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-200 min-h-[42px] {{ $active ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/25' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/60 dark:hover:text-white' }}" 
+                               @if ($active) aria-current="page" @endif>
+                                <div class="flex h-7 w-7 items-center justify-center rounded-lg transition-colors {{ $active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-800 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-slate-700 dark:group-hover:text-slate-200' }}">
+                                    {!! $item['icon'] !!}
+                                </div>
+                                <span class="truncate">{{ $item['label'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
             @endif
-            @foreach ($items as $item)
-                @php
-                    $url = isset($item['url']) ? url($item['url']) : route($item['route']);
-                    $active = request()->routeIs($item['match']);
-                @endphp
-                <a href="{{ $url }}" class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition min-h-[44px] {{ $active ? 'bg-emerald-50 text-emerald-700 border-l-2 border-emerald-600' : 'text-slate-700 hover:bg-slate-100 border-l-2 border-transparent' }}" @if ($active) aria-current="page" @endif>
-                    {!! $item['icon'] !!}
-                    <span>{{ $item['label'] }}</span>
-                </a>
-            @endforeach
-        @endif
-    @endforeach
+        @endforeach
 
-    @if (empty($sections))
-        <p class="px-3 py-4 text-sm text-slate-500">{{ __('No navigation available for your account.') }}</p>
-    @endif
-</nav>
+        @if (empty($sections))
+            <p class="px-3 py-4 text-xs text-slate-400">{{ __('No navigation available for your account.') }}</p>
+        @endif
+    </nav>
+
+    <!-- Bottom User Profile Card -->
+    <div class="mt-6 border-t border-slate-200/80 pt-4 dark:border-slate-800">
+        <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-2.5 dark:bg-slate-800/60">
+            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white shadow-sm">
+                {{ substr(auth()->user()?->name ?? 'A', 0, 1) }}
+            </div>
+            <div class="flex-1 overflow-hidden">
+                <p class="truncate text-xs font-bold text-slate-900 dark:text-white">{{ auth()->user()?->name }}</p>
+                <p class="truncate text-[10px] text-slate-400">{{ $isSuperAdmin ? 'Super Admin' : ($isManager ? 'Mess Manager' : 'Mess Member') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
