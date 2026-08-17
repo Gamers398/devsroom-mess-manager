@@ -1,13 +1,9 @@
 @php
-    /**
-     * Role-based, grouped sidebar with modern styling & dark mode support.
-     */
     $user = auth()->user();
     $isManager = $user && $user->canManageMess();
     $isSuperAdmin = $user && $user->hasRole('super-admin');
     $isMember = $user && ! $isManager && $user->hasAnyRole(['user', 'mess-member']);
 
-    // A nav item: [route name (or null for URL), routeIs match, label, icon SVG, url override]
     $managerSections = [
         [
             'label' => null,
@@ -29,7 +25,7 @@
             'label' => __('Finance'),
             'items' => [
                 ['route' => 'mess.expenses.index', 'match' => 'mess.expenses.*', 'label' => __('Expenses'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h15a2.25 2.25 0 0 1 2.25 2.25H2.25V8.25Zm0 3.75h15a2.25 2.25 0 0 1 2.25 2.25H2.25V12Zm0 3.75h15a2.25 2.25 0 0 1 2.25 2.25H2.25v-2.25Z"/></svg>'],
-                ['route' => 'mess.categories.index', 'match' => 'mess.categories.*', 'label' => __('Categories'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z"/></svg>'],
+                ['route' => 'mess.categories.index', 'match' => 'mess.categories.*', 'label' => __('Categories'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z"/></svg>'],
                 ['route' => 'mess.payments.index', 'match' => 'mess.payments.*', 'label' => __('Payments'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-4.5 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"/></svg>'],
                 ['route' => 'mess.advance-balances.index', 'match' => 'mess.advance-balances.*', 'label' => __('Member balances'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h15a2.25 2.25 0 0 1 2.25 2.25H2.25V8.25ZM2.25 12h15a2.25 2.25 0 0 1 2.25 2.25H2.25V12Zm0 3.75h15a2.25 2.25 0 0 1 2.25 2.25H2.25v-2.25Z"/></svg>'],
                 ['route' => 'mess.settlements.index', 'match' => 'mess.settlements.*', 'label' => __('Pending settlements'), 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>'],
@@ -102,7 +98,7 @@
 @endphp
 
 <div class="flex h-full flex-col justify-between p-3.5">
-    <nav class="space-y-5">
+    <nav class="space-y-4">
         @foreach ($sections as $section)
             @php
                 $items = collect($section['items'])->filter(function ($item) {
@@ -114,7 +110,7 @@
             @if ($items->isNotEmpty())
                 <div>
                     @if (! empty($section['label']))
-                        <div class="px-3 pb-1.5 text-[11px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                        <div class="px-3 pb-1 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
                             {{ $section['label'] }}
                         </div>
                     @endif
@@ -125,7 +121,7 @@
                                 $active = request()->routeIs($item['match']);
                             @endphp
                             <a href="{{ $url }}" 
-                               class="group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-200 min-h-[42px] {{ $active ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/25' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/60 dark:hover:text-white' }}" 
+                               class="group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-150 min-h-[40px] {{ $active ? 'bg-emerald-600 text-white shadow-xs dark:bg-emerald-600' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/80 dark:hover:text-white' }}" 
                                @if ($active) aria-current="page" @endif>
                                 <div class="flex h-7 w-7 items-center justify-center rounded-lg transition-colors {{ $active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-800 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-slate-700 dark:group-hover:text-slate-200' }}">
                                     {!! $item['icon'] !!}
@@ -143,15 +139,15 @@
         @endif
     </nav>
 
-    <!-- Bottom User Profile Card -->
-    <div class="mt-6 border-t border-slate-200/80 pt-4 dark:border-slate-800">
-        <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-2.5 dark:bg-slate-800/60">
-            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white shadow-sm">
+    <!-- Bottom Role Badge -->
+    <div class="mt-4 border-t border-slate-200/80 pt-3 dark:border-slate-800">
+        <div class="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2 dark:bg-slate-800/60">
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-xs font-black text-white shadow-xs">
                 {{ substr(auth()->user()?->name ?? 'A', 0, 1) }}
             </div>
             <div class="flex-1 overflow-hidden">
                 <p class="truncate text-xs font-bold text-slate-900 dark:text-white">{{ auth()->user()?->name }}</p>
-                <p class="truncate text-[10px] text-slate-400">{{ $isSuperAdmin ? 'Super Admin' : ($isManager ? 'Mess Manager' : 'Mess Member') }}</p>
+                <p class="truncate text-[10px] font-medium text-slate-400">{{ $isSuperAdmin ? 'Super Admin' : ($isManager ? 'Mess Manager' : 'Mess Member') }}</p>
             </div>
         </div>
     </div>
