@@ -48,14 +48,14 @@
             </a>
         @endif
 
-        <!-- Uniform 7-Card Grid (Crisp Dark/Light Badges) -->
+        <!-- Uniform 7-Card Grid with Dedicated Adaptive Badges -->
         <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             
             <!-- 1. Total Members -->
             <div class="group relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-[#1e2c47] dark:bg-[#141e33]">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">{{ __('Total Members') }}</span>
-                    <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-[#1a2942] dark:text-slate-300">
+                    <div class="stat-icon-badge badge-slate">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </div>
                 </div>
@@ -67,7 +67,7 @@
             <div class="group relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-[#1e2c47] dark:bg-[#141e33]">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">{{ __("Today's Meals") }}</span>
-                    <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400">
+                    <div class="stat-icon-badge badge-sky">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                 </div>
@@ -79,7 +79,7 @@
             <div class="group relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-[#1e2c47] dark:bg-[#141e33]">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">{{ __('Total Meals (Month)') }}</span>
-                    <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400">
+                    <div class="stat-icon-badge badge-indigo">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     </div>
                 </div>
@@ -91,7 +91,7 @@
             <div class="group relative rounded-2xl border border-emerald-300/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-emerald-500/30 dark:bg-[#141e33]">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">{{ __('Meal Rate') }}</span>
-                    <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                    <div class="stat-icon-badge badge-emerald">
                         <span class="text-sm font-black">৳</span>
                     </div>
                 </div>
@@ -106,7 +106,7 @@
             <div class="group relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-[#1e2c47] dark:bg-[#141e33]">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">{{ __('Monthly Expenses') }}</span>
-                    <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400">
+                    <div class="stat-icon-badge badge-amber">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                     </div>
                 </div>
@@ -118,7 +118,7 @@
             <div class="group relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-[#1e2c47] dark:bg-[#141e33]">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">{{ __('Total Advance') }}</span>
-                    <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
+                    <div class="stat-icon-badge badge-emerald">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                     </div>
                 </div>
@@ -130,7 +130,7 @@
             <div class="group relative rounded-2xl border border-rose-300/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-rose-500/30 dark:bg-[#141e33]">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">{{ __('Total Dues') }}</span>
-                    <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400">
+                    <div class="stat-icon-badge badge-rose">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     </div>
                 </div>
@@ -139,18 +139,18 @@
             </div>
         </section>
 
-        <!-- Widgets & Charts Section (Clean Text Without Pill Blobs) -->
+        <!-- Widgets & Charts Section -->
         <section class="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <!-- Members with dues -->
-            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-[#111827]">
+            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#1e2c47] dark:bg-[#141e33]">
                 <h3 class="mb-3 text-sm font-bold text-slate-900 dark:text-white">{{ __('Members with dues') }}</h3>
                 @if (empty($membersWithDues))
                     <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('No one currently owes the mess. 🎉') }}</p>
                 @else
-                    <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <ul class="divide-y divide-slate-100 dark:divide-[#1e2c47]">
                         @foreach ($membersWithDues as $m)
                             <li class="flex items-center justify-between py-2.5">
-                                <a href="{{ route('mess.members.wallet', $m['id']) }}" class="text-sm font-semibold text-slate-900 hover:text-emerald-600 hover:underline dark:text-slate-200 dark:hover:text-emerald-400">{{ $m['name'] }}</a>
+                                <a href="{{ route('mess.members.wallet', $m['id']) }}" class="text-sm font-semibold text-slate-900 hover:text-emerald-600 dark:text-slate-200 dark:hover:text-emerald-400">{{ $m['name'] }}</a>
                                 <span class="text-sm font-black text-rose-600 dark:text-rose-400">{{ Money::taka(abs($m['net'])) }}</span>
                             </li>
                         @endforeach
@@ -159,12 +159,12 @@
             </div>
 
             <!-- Top eaters -->
-            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-[#111827]">
+            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#1e2c47] dark:bg-[#141e33]">
                 <h3 class="mb-3 text-sm font-bold text-slate-900 dark:text-white">{{ __('Top eaters this month') }}</h3>
                 @if (empty($topEaters))
                     <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('No meals recorded yet this month.') }}</p>
                 @else
-                    <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <ul class="divide-y divide-slate-100 dark:divide-[#1e2c47]">
                         @foreach ($topEaters as $m)
                             <li class="flex items-center justify-between py-2.5">
                                 <span class="text-sm font-semibold text-slate-900 dark:text-slate-200">{{ $m['name'] }}</span>
@@ -176,7 +176,7 @@
             </div>
 
             <!-- Spend vs collection -->
-            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-[#111827]">
+            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#1e2c47] dark:bg-[#141e33]">
                 <h3 class="mb-3 text-sm font-bold text-slate-900 dark:text-white">{{ __('Spend vs collection this month') }}</h3>
                 <div style="height: 240px;">
                     <canvas id="bazar-collection-chart"></canvas>
@@ -184,7 +184,7 @@
             </div>
 
             <!-- Expense categories -->
-            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-[#111827]">
+            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#1e2c47] dark:bg-[#141e33]">
                 <h3 class="mb-3 text-sm font-bold text-slate-900 dark:text-white">{{ __('Expense categories this month') }}</h3>
                 @if (empty($expenseCategoryMix))
                     <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('No expenses recorded yet this month.') }}</p>
