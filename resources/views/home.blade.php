@@ -97,22 +97,23 @@
             </div>
 
             {{-- 4. Current Meal Rate (Featured Gradient Card) --}}
-            @php
-                $mealRateHint = ((float) $cards['meal_rate'] === 0.0) ? __('no bazar recorded yet') : __('Calculated from bazar & meals');
-            @endphp
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-800 to-slate-900 p-5 text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:col-span-2 lg:col-span-1">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-300">{{ __('Current Meal Rate') }}</span>
-                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-emerald-300 backdrop-blur-md">
-                        <span class="text-base font-bold">৳</span>
-                    </div>
-                </div>
-                <p class="mt-3 text-3xl font-extrabold tracking-tight text-white">
-                    {{ Money::taka((float) $cards['meal_rate']) }} 
-                    <span class="text-sm font-normal text-emerald-200">/ {{ __('meal') }}</span>
-                </p>
-                <span class="mt-1 block text-xs text-emerald-300/80">{{ $mealRateHint }}</span>
-            </div>
+@php
+    $mealRateHint = ((float) $cards['meal_rate'] === 0.0) ? __('no bazar recorded yet') : __('Calculated from bazar & meals');
+@endphp
+<div class="relative overflow-hidden rounded-2xl p-5 shadow-md transition-all duration-200 hover:-translate-y-0.5 sm:col-span-2 lg:col-span-1"
+     style="background: linear-gradient(135deg, #065f46 0%, #0b1e33 100%) !important; color: #ffffff !important;">
+    <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider" style="color: #6ee7b7 !important;">{{ __('Current Meal Rate') }}</span>
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl backdrop-blur-md" style="background: rgba(255, 255, 255, 0.15); color: #6ee7b7;">
+            <span class="text-base font-bold">৳</span>
+        </div>
+    </div>
+    <p class="mt-3 text-3xl font-extrabold tracking-tight" style="color: #ffffff !important;">
+        {{ Money::taka((float) $cards['meal_rate']) }} 
+        <span class="text-sm font-normal" style="color: #a7f3d0 !important;">/ {{ __('meal') }}</span>
+    </p>
+    <span class="mt-1 block text-xs" style="color: #a7f3d0 !important;">{{ $mealRateHint }}</span>
+</div>
 
             {{-- 5. Monthly Expenses --}}
             <div class="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md">
